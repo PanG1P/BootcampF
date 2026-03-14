@@ -1,24 +1,19 @@
+import AdminNavbar from "@/components/admin/AdminNavbar";
+import AdminSidebar from "@/components/admin/AdminSidebar";
+
 export default function AdminLayout({
   children,
-}: {
+}: Readonly<{
   children: React.ReactNode;
-}) {
+}>) {
   return (
-    <div style={{ display: "flex" }}>
-      
-      <aside style={{ width: "200px", background: "#eee", padding: "20px" }}>
-        <h3>Admin</h3>
-        <ul>
-          <li>Dashboard</li>
-          <li>Products</li>
-          <li>Orders</li>
-          <li>Resellers</li>
-        </ul>
-      </aside>
-      <main style={{ padding: "20px", flex: 1 }}>
-        {children}
-      </main>
+    <div className="min-h-screen bg-slate-100 flex">
+      <AdminSidebar />
 
+      <div className="flex-1 flex flex-col">
+        <AdminNavbar />
+        <main className="p-6">{children}</main>
+      </div>
     </div>
   );
 }
