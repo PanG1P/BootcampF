@@ -1,78 +1,131 @@
-// กำหนดรูปแบบข้อมูลของ reseller 1 คน
-// ใช้บอกว่า reseller แต่ละรายการต้องมีข้อมูลอะไรบ้าง
+"use client";
+
+// กำหนดรูปแบบข้อมูลของตัวแทน 1 คน
 type Reseller = {
   id: number;
-  name: string;
+  fullName: string;
   email: string;
   shopName: string;
-  status: "Pending" | "Approved" | "Rejected";
+  phone: string;
+  appliedAt: string;
+  status: "รออนุมัติ" | "อนุมัติแล้ว" | "ถูกปฏิเสธ";
 };
 
-// กำหนด props ของ component
-// component นี้ต้องรับข้อมูล resellers เข้ามาเป็น array
+// กำหนด props ที่ component นี้ต้องรับ
 type ResellerTableProps = {
   resellers: Reseller[];
+  onApprove: (id: number) => void;
+  onReject: (id: number) => void;
 };
 
-// component สำหรับแสดงตาราง reseller
-export default function ResellerTable({ resellers }: ResellerTableProps) {
+// component สำหรับแสดงตารางตัวแทน
+export default function ResellerTable({
+  resellers,
+  onApprove,
+  onReject,
+}: ResellerTableProps) {
   return (
-    <div className="overflow-x-auto rounded-2xl bg-white border border-slate-200 shadow-sm">
+    <div className="overflow-x-auto rounded-2xl border border-slate-200 bg-white shadow-sm">
       <table className="w-full text-left">
-        {/* ส่วนหัวของตาราง */}
+        {/* หัวตาราง */}
         <thead className="bg-slate-50">
           <tr>
-            <th className="px-5 py-3 text-sm font-semibold text-slate-600">ID</th>
-            <th className="px-5 py-3 text-sm font-semibold text-slate-600">Name</th>
-            <th className="px-5 py-3 text-sm font-semibold text-slate-600">Email</th>
-            <th className="px-5 py-3 text-sm font-semibold text-slate-600">Shop Name</th>
-            <th className="px-5 py-3 text-sm font-semibold text-slate-600">Status</th>
-            <th className="px-5 py-3 text-sm font-semibold text-slate-600">Actions</th>
+            <th className="px-5 py-3 text-sm font-semibold text-slate-600">
+              ชื่อ-นามสกุล
+            </th>
+            <th className="px-5 py-3 text-sm font-semibold text-slate-600">
+              อีเมล
+            </th>
+            <th className="px-5 py-3 text-sm font-semibold text-slate-600">
+              ชื่อร้าน
+            </th>
+            <th className="px-5 py-3 text-sm font-semibold text-slate-600">
+              เบอร์โทรศัพท์
+            </th>
+            <th className="px-5 py-3 text-sm font-semibold text-slate-600">
+              วันที่สมัคร
+            </th>
+            <th className="px-5 py-3 text-sm font-semibold text-slate-600">
+              สถานะ
+            </th>
+            <th className="px-5 py-3 text-sm font-semibold text-slate-600">
+              จัดการ
+            </th>
           </tr>
         </thead>
 
-        {/* ส่วนข้อมูลในตาราง */}
+        {/* ข้อมูลในตาราง */}
         <tbody>
-          {/* ใช้ map วนลูปข้อมูล reseller เพื่อสร้างแถวทีละรายการ */}
           {resellers.map((reseller) => (
-            <tr key={reseller.id} className="border-t border-slate-100">
-              <td className="px-5 py-4 text-sm text-slate-700">{reseller.id}</td>
-
+            <tr
+              key={reseller.id}
+              className={`border-t border-slate-100 ${
+                reseller.status === "รออนุมัติ" ? "bg-yellow-50" : ""
+              }`}
+            >
+              {/* ชื่อ-นามสกุล */}
               <td className="px-5 py-4 text-sm font-medium text-slate-800">
-                {reseller.name}
+                {reseller.fullName}
               </td>
 
+              {/* อีเมล */}
               <td className="px-5 py-4 text-sm text-slate-700">
                 {reseller.email}
               </td>
 
+              {/* ชื่อร้าน */}
               <td className="px-5 py-4 text-sm text-slate-700">
                 {reseller.shopName}
               </td>
 
-              {/* แสดงสีตามสถานะ */}
-              <td className="px-5 py-4 text-sm">
-                <span
-                  className={`rounded-full px-3 py-1 text-xs font-semibold ${
-                    reseller.status === "Approved"
-                      ? "bg-green-100 text-green-700"
-                      : reseller.status === "Pending"
-                      ? "bg-yellow-100 text-yellow-700"
-                      : "bg-red-100 text-red-700"
-                  }`}
-                >
-                  {reseller.status}
-                </span>
+              {/* เบอร์โทรศัพท์ */}
+              <td className="px-5 py-4 text-sm text-slate-700">
+                {reseller.phone}
               </td>
 
-              {/* ปุ่มจัดการสถานะ */}
+              {/* วันที่สมัคร */}
+              <td className="px-5 py-4 text-sm text-slate-700">
+                {reseller.appliedAt}
+              </td>
+
+              {/* สถานะ */}
+              <td className="px-5 py-4 text-sm">
+                {reseller.status === "รออนุมัติ" && (
+                  <span className="rounded-full bg-yellow-100 px-3 py-1 text-xs font-semibold text-yellow-700">
+                    รออนุมัติ
+                  </span>
+                )}
+
+                {reseller.status === "อนุมัติแล้ว" && (
+                  <span className="rounded-full bg-green-100 px-3 py-1 text-xs font-semibold text-green-700">
+                    อนุมัติแล้ว
+                  </span>
+                )}
+
+                {reseller.status === "ถูกปฏิเสธ" && (
+                  <span className="rounded-full bg-red-100 px-3 py-1 text-xs font-semibold text-red-700">
+                    ถูกปฏิเสธ
+                  </span>
+                )}
+              </td>
+
+              {/* ปุ่มจัดการ */}
               <td className="px-5 py-4">
                 <div className="flex gap-2">
-                  <button className="rounded-lg bg-green-500 px-3 py-2 text-sm font-medium text-white hover:bg-green-600">
-                    Approve
+                  <button
+                    onClick={() => onApprove(reseller.id)}
+                    disabled={reseller.status !== "รออนุมัติ"}
+                    className="rounded-lg bg-green-500 px-3 py-2 text-sm font-medium text-white hover:bg-green-600 disabled:cursor-not-allowed disabled:bg-slate-300"
+                  >
+                    อนุมัติ
                   </button>
-                  <button className="rounded-lg bg-red-500 px-3 py-2 text-sm font-medium text-white hover:bg-red-600">
-                    Reject
+
+                  <button
+                    onClick={() => onReject(reseller.id)}
+                    disabled={reseller.status !== "รออนุมัติ"}
+                    className="rounded-lg bg-red-500 px-3 py-2 text-sm font-medium text-white hover:bg-red-600 disabled:cursor-not-allowed disabled:bg-slate-300"
+                  >
+                    ปฏิเสธ
                   </button>
                 </div>
               </td>
