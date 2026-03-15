@@ -1,7 +1,5 @@
 "use client";
 
-import Link from "next/link";
-
 type Product = {
   id: number;
   image: string;
@@ -9,13 +7,20 @@ type Product = {
   costPrice: number;
   minPrice: number;
   stock: number;
+  description?: string;
 };
 
 type ProductTableProps = {
   products: Product[];
+  onEdit: (product: Product) => void;
+  onDelete: (id: number) => void;
 };
 
-export default function ProductTable({ products }: ProductTableProps) {
+export default function ProductTable({
+  products,
+  onEdit,
+  onDelete,
+}: ProductTableProps) {
   return (
     <div className="overflow-x-auto rounded-2xl border border-slate-200 bg-white shadow-sm">
       <table className="w-full text-left">
@@ -32,7 +37,7 @@ export default function ProductTable({ products }: ProductTableProps) {
 
         <tbody>
           {products.map((product) => (
-            <tr key={product.id} className="border-t border-slate-100 hover:bg-slate-50">
+            <tr key={product.id} className="border-t border-slate-100">
               <td className="px-5 py-4">
                 <img
                   src={product.image}
@@ -59,15 +64,15 @@ export default function ProductTable({ products }: ProductTableProps) {
 
               <td className="px-5 py-4">
                 <div className="flex gap-2">
-                  <Link
-                    href={`/admin/products/edit/${product.id}`}
+                  <button
+                    onClick={() => onEdit(product)}
                     className="rounded-lg bg-blue-500 px-3 py-2 text-sm font-medium text-white hover:bg-blue-600"
                   >
                     แก้ไข
-                  </Link>
+                  </button>
 
                   <button
-                    onClick={() => alert(`ลบสินค้า ID: ${product.id} (mock)`)}
+                    onClick={() => onDelete(product.id)}
                     className="rounded-lg bg-red-500 px-3 py-2 text-sm font-medium text-white hover:bg-red-600"
                   >
                     ลบ
