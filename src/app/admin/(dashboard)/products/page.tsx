@@ -1,54 +1,62 @@
+import Link from "next/link";
 import ProductTable from "@/components/admin/ProductTable";
 
+// mock data คือข้อมูลจำลอง
+// ตอนนี้ใช้แทนข้อมูลจาก backend ไปก่อน
 const products = [
   {
     id: 1,
+    image: "https://via.placeholder.com/80?text=P1",
     name: "Dental Mirror",
-    category: "Dental Tools",
-    price: 250,
+    costPrice: 120,
+    minPrice: 150,
     stock: 45,
-    status: "Active" as const,
   },
   {
     id: 2,
+    image: "https://via.placeholder.com/80?text=P2",
     name: "Tooth Extraction Forceps",
-    category: "Dental Tools",
-    price: 1200,
+    costPrice: 850,
+    minPrice: 1000,
     stock: 12,
-    status: "Active" as const,
   },
   {
     id: 3,
+    image: "https://via.placeholder.com/80?text=P3",
     name: "Disposable Gloves",
-    category: "Consumables",
-    price: 350,
+    costPrice: 220,
+    minPrice: 300,
     stock: 100,
-    status: "Active" as const,
   },
   {
     id: 4,
+    image: "https://via.placeholder.com/80?text=P4",
     name: "Face Mask",
-    category: "Consumables",
-    price: 180,
+    costPrice: 90,
+    minPrice: 120,
     stock: 0,
-    status: "Inactive" as const,
   },
 ];
 
+// component หลักของหน้า /admin/products
+// หน้าที่คือแสดงหัวข้อหน้า และส่งข้อมูลสินค้าเข้า ProductTable
 export default function AdminProductsPage() {
   return (
     <div className="space-y-6">
       <section className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-slate-800">Products</h1>
+          <h1 className="text-2xl font-bold text-slate-800">จัดการสินค้า</h1>
           <p className="mt-1 text-slate-500">
-            Manage product list, stock, and product status
+            แสดงรายการสินค้าทั้งหมดในระบบ
           </p>
         </div>
 
-        <button className="rounded-xl bg-slate-900 px-4 py-3 text-sm font-semibold text-white hover:bg-slate-800">
-          + Add Product
-        </button>
+        <Link
+          href="/admin/products/add"
+          className="rounded-xl bg-slate-900 px-4 py-3 text-sm font-semibold text-white hover:bg-slate-800"
+        >
+          + เพิ่มสินค้า
+        </Link>
       </section>
 
       <ProductTable products={products} />
