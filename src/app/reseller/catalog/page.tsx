@@ -29,51 +29,46 @@ export default function CatalogPage() {
 
         {products.map((product) => (
 
-          <div
-            key={product.id}
-            className="relative group border rounded-xl p-4 shadow-sm bg-white"
-          >
+          <Link key={product.id} href="/reseller/my-products">
+            <div className="relative group border rounded-xl p-4 shadow-sm bg-white cursor-pointer">
 
-            <img
-              src={product.image}
-              alt={product.name}
-              className="w-full h-40 object-cover rounded"
-            />
+              <img
+                src={product.image}
+                alt={product.name}
+                className="w-full h-40 object-cover rounded"
+              />
 
-            <h2 className="font-semibold mt-3">{product.name}</h2>
-
-            <p className="text-green-600 font-bold">
-              ฿{product.price}
-            </p>
-
-            <p className="text-sm text-gray-500">
-              Stock left: {product.stock}
-            </p>
-
-            {/* Hover Popup */}
-            <div className="absolute inset-0 bg-black/80 text-white flex flex-col justify-center items-center opacity-0 group-hover:opacity-100 transition rounded-xl">
-
-              <p className="text-lg font-bold">
+              <h2 className="font-semibold mt-3">
                 {product.name}
+              </h2>
+
+              <p className="text-green-600 font-bold">
+                ฿{product.price}
               </p>
 
-              <p className="mt-1">
-                Price: ฿{product.price}
-              </p>
-
-              <p className="mt-1">
+              <p className="text-sm text-gray-500">
                 Stock left: {product.stock}
               </p>
 
-              <Link href={`/shop/${product.id}`}>
-                <button className="mt-3 bg-blue-500 px-4 py-2 rounded hover:bg-blue-600">
-                  Order Now
-                </button>
-              </Link>
+              {/* Hover Popup */}
+              <div className="absolute inset-0 bg-black/80 text-white flex flex-col justify-center items-center opacity-0 group-hover:opacity-100 transition rounded-xl">
+
+                <p className="text-lg font-bold">
+                  {product.name}
+                </p>
+
+                <p className="mt-1">
+                  Price: ฿{product.price}
+                </p>
+
+                <p className="mt-1">
+                  Stock left: {product.stock}
+                </p>
+
+              </div>
 
             </div>
-
-          </div>
+          </Link>
 
         ))}
 

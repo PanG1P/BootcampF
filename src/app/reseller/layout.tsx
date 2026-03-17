@@ -50,8 +50,8 @@ export default function ResellerLayout({
 
       </aside>
 
-      {/* Content */}
-      <main className="flex-1 p-6">
+      {/* 🔥 FIX ตรงนี้ */}
+      <main className="flex-1 p-6 bg-white text-black">
         {children}
       </main>
 
