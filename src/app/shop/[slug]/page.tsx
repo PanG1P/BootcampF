@@ -1,3 +1,5 @@
+import Link from "next/link";
+
 type Product = {
   id: string;
   name: string;
@@ -17,58 +19,57 @@ const products: Product[] = [
   { id: "C008", name: "Street Cap", price: 250, stock: 90, image: "https://via.placeholder.com/400" },
 ];
 
-export default async function ProductPage({
-  params,
-}: {
-  params: Promise<{ slug: string }>;
-}) {
-
-  const { slug } = await params;
-
-  const product = products.find((p) => p.id === slug);
-
-  if (!product) {
-    return (
-      <div className="p-10 text-center">
-        <h1 className="text-2xl font-bold">Product not found</h1>
-      </div>
-    );
-  }
-
+export default function ShopPage() {
   return (
-    <div className="p-10">
+    <div className="p-10 bg-gray-50 min-h-screen">
 
-      <div className="grid grid-cols-2 gap-10">
+      <h1 className="text-3xl font-bold mb-8 text-slate-800">
+        🛍️ Shop Products
+      </h1>
 
-        {/* รูปสินค้า */}
-        <div>
-          <img
-            src={product.image}
-            alt={product.name}
-            className="w-full rounded-xl"
-          />
-        </div>
+      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
 
-        {/* รายละเอียดสินค้า */}
-        <div>
+        {products.map((product) => (
+          <Link
+            key={product.id}
+            href={`/checkout?id=${product.id}&name=${product.name}&price=${product.price}`}
+            className="group"
+          >
 
-          <h1 className="text-3xl font-bold mb-4">
-            {product.name}
-          </h1>
+            <div className="relative bg-white rounded-2xl shadow hover:shadow-lg transition overflow-hidden">
 
-          <p className="text-2xl text-green-600 font-semibold mb-4">
-            ฿{product.price}
-          </p>
+              <div className="overflow-hidden">
+                <img
+                  src={product.image}
+                  alt={product.name}
+                  className="w-full h-56 object-cover group-hover:scale-105 transition duration-300"
+                />
+              </div>
 
-          <p className="text-gray-600 mb-6">
-            Stock available: {product.stock}
-          </p>
+              <div className="p-4">
+                <h2 className="font-semibold text-slate-800">
+                  {product.name}
+                </h2>
 
-          <button className="bg-black text-white px-6 py-3 rounded-lg hover:bg-gray-800">
-            Buy Now
-          </button>
+                <p className="text-green-600 font-bold mt-1">
+                  ฿{product.price}
+                </p>
 
-        </div>
+                <p className="text-sm text-gray-500">
+                  Stock: {product.stock}
+                </p>
+              </div>
+
+              <div className="absolute inset-0 bg-black/60 backdrop-blur-sm opacity-0 group-hover:opacity-100 flex items-center justify-center transition">
+                <span className="text-white font-semibold text-lg">
+                  View Product
+                </span>
+              </div>
+
+            </div>
+
+          </Link>
+        ))}
 
       </div>
 

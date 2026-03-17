@@ -1,15 +1,24 @@
 "use client";
 
 import { useState } from "react";
+import { useSearchParams, useRouter } from "next/navigation";
 
 export default function CheckoutPage() {
+  const searchParams = useSearchParams();
+  const router = useRouter();
+
+  const productName = searchParams.get("name");
+  const productPrice = Number(searchParams.get("price") || 0);
+
+  const shipping = 50;
+  const total = productPrice + shipping;
 
   const [name, setName] = useState("");
   const [phone, setPhone] = useState("");
   const [address, setAddress] = useState("");
 
   const handleOrder = () => {
-    alert("Order placed successfully!");
+    router.push(`/track-order?name=${productName}&total=${total}`);
   };
 
   return (
@@ -58,9 +67,7 @@ export default function CheckoutPage() {
 
             </div>
 
-            {/* Payment */}
             <div className="mt-6">
-
               <h3 className="font-semibold text-black mb-2">
                 Payment Method
               </h3>
@@ -68,7 +75,6 @@ export default function CheckoutPage() {
               <div className="border p-4 rounded-lg bg-gray-50 font-medium">
                 💳 Online Payment
               </div>
-
             </div>
 
           </div>
@@ -81,20 +87,20 @@ export default function CheckoutPage() {
             </h2>
 
             <div className="flex justify-between text-black mb-2">
-              <span>Oversize T-Shirt</span>
-              <span>฿390</span>
+              <span>{productName}</span>
+              <span>฿{productPrice}</span>
             </div>
 
             <div className="flex justify-between text-black mb-2">
               <span>Shipping</span>
-              <span>฿50</span>
+              <span>฿{shipping}</span>
             </div>
 
             <hr className="my-4" />
 
             <div className="flex justify-between font-bold text-lg text-black">
               <span>Total</span>
-              <span>฿440</span>
+              <span>฿{total}</span>
             </div>
 
             <button
