@@ -1,94 +1,89 @@
 "use client";
+
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { adminLogin, resellerLogin } from "@/services/auth.service";
 
-export default function AdminLoginPage() {
-  // useState ใช้เก็บค่าที่ผู้ใช้พิมพ์ใน input
-  // email เก็บค่าอีเมล
-  // password เก็บค่ารหัสผ่าน
+export default function LoginPage() {
+  const router = useRouter();
+
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const router = useRouter();
-  // useState สำหรับเก็บข้อความแจ้งเตือน
-  const [message, setMessage] = useState("");
+  const [error, setError] = useState("");
+  const [loading, setLoading] = useState(false);
 
-  // function นี้จะทำงานเมื่อผู้ใช้กด submit form
-  const handleSubmit = (e: React.FormEvent) => {
-    // ป้องกันไม่ให้ form reload หน้าเว็บ
+  const handleLogin = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
+    setError("");
+    setLoading(true);
 
-    // ตรวจสอบว่า input ถูกกรอกครบหรือยัง
-    if (!email || !password) {
-      setMessage("Please fill in both email and password.");
-      return;
+    try {
+      let result;
+
+      try {
+        result = await adminLogin({ email, password });
+      } catch {
+        result = await resellerLogin({ email, password });
+      }
+
+      localStorage.setItem("token", result.token);
+      localStorage.setItem("role", result.role);
+      if (result.status) localStorage.setItem("status", result.status);
+
+      if (result.role === "admin") {
+        router.push("/admin/dashboard");
+      } else {
+        router.push("/reseller/dashboard");
+      }
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "เข้าสู่ระบบไม่สำเร็จ");
+    } finally {
+      setLoading(false);
     }
-
-    // ตอนนี้ยังไม่ได้เชื่อม backend
-    // เลยใช้แค่แสดงข้อความจำลองว่ากด login สำเร็จ
-    setMessage("Login success");
-
-    // จำลอง login สำเร็จ แล้วพาไป dashboard
-    setTimeout(() => {
-      router.push("/reseller/dashboard");
-    }, 1000);
   };
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-slate-100 px-4">
-      <div className="w-full max-w-md rounded-2xl border border-slate-200 bg-white p-8 shadow-sm">
-        {/* ส่วนหัวของหน้า */}
-        <div className="mb-6">
-          <h1 className="text-2xl font-bold text-slate-800">Login</h1>
-          <p className="mt-2 text-sm text-slate-500">
-            Sign in to access the dashboard
-          </p>
-        </div>
+    <div className="min-h-screen flex items-center justify-center bg-slate-100 px-4">
+      <div className="w-full max-w-md rounded-2xl bg-white p-6 shadow">
+        <h1 className="text-2xl font-bold text-slate-800 mb-6">Login</h1>
 
-        {/* form คือส่วนรับข้อมูลจากผู้ใช้ */}
-        <form onSubmit={handleSubmit} className="space-y-4">
-          {/* กล่องกรอก email */}
+        <form onSubmit={handleLogin} className="space-y-4">
           <div>
-            <label className="mb-2 block text-sm font-medium text-slate-700">
-              Email
-            </label>
+            <label className="mb-1 block text-sm text-slate-600">Email</label>
             <input
               type="email"
-              placeholder="admin@example.com"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               className="w-full rounded-xl border border-slate-300 px-4 py-3 outline-none focus:border-slate-500"
+              placeholder="กรอกอีเมล"
+              required
             />
           </div>
 
-          {/* กล่องกรอกรหัสผ่าน */}
           <div>
-            <label className="mb-2 block text-sm font-medium text-slate-700">
-              Password
-            </label>
+            <label className="mb-1 block text-sm text-slate-600">Password</label>
             <input
               type="password"
-              placeholder="Enter your password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               className="w-full rounded-xl border border-slate-300 px-4 py-3 outline-none focus:border-slate-500"
+              placeholder="กรอกรหัสผ่าน"
+              required
             />
           </div>
 
-          {/* ปุ่ม submit form */}
+          {error && (
+            <p className="text-sm text-red-500">{error}</p>
+          )}
+
           <button
             type="submit"
-            className="w-full rounded-xl bg-slate-900 px-4 py-3 font-semibold text-white hover:bg-slate-800"
+            disabled={loading}
+            className="w-full rounded-xl bg-slate-900 px-4 py-3 text-white hover:bg-slate-800 disabled:opacity-50"
           >
-            Login
+            {loading ? "กำลังเข้าสู่ระบบ..." : "เข้าสู่ระบบ"}
           </button>
         </form>
-
-        {/* แสดงข้อความแจ้งเตือน */}
-        {message && (
-          <p className="mt-4 rounded-lg bg-slate-100 px-4 py-3 text-sm text-slate-700">
-            {message}
-          </p>
-        )}
       </div>
     </div>
   );
