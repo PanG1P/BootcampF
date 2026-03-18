@@ -1,26 +1,28 @@
 "use client";
 
-type Product = {
-  id: number;
-  image: string;
-  name: string;
-  costPrice: number;
-  minPrice: number;
-  stock: number;
-  description?: string;
-};
+import type { Product } from "@/types/product";
 
 type ProductTableProps = {
   products: Product[];
   onEdit: (product: Product) => void;
   onDelete: (id: number) => void;
+  loading?: boolean;
 };
 
 export default function ProductTable({
   products,
   onEdit,
   onDelete,
+  loading = false,
 }: ProductTableProps) {
+  if (!loading && products.length === 0) {
+    return (
+      <div className="rounded-2xl border border-slate-200 bg-white p-6 text-sm text-slate-500 shadow-sm">
+        ไม่พบข้อมูลสินค้า
+      </div>
+    );
+  }
+
   return (
     <div className="overflow-x-auto rounded-2xl border border-slate-200 bg-white shadow-sm">
       <table className="w-full text-left">
@@ -36,51 +38,59 @@ export default function ProductTable({
         </thead>
 
         <tbody>
-          {products.map((product) => (
-            <tr key={product.id} className="border-t border-slate-100">
-              <td className="px-5 py-4">
-                <img
-                  src={product.image}
-                  alt={product.name}
-                  className="h-14 w-14 rounded-lg border border-slate-200 object-cover"
-                />
-              </td>
-
-              <td className="px-5 py-4 text-sm font-medium text-slate-800">
-                {product.name}
-              </td>
-
-              <td className="px-5 py-4 text-sm text-slate-700">
-                ฿{product.costPrice.toLocaleString()}
-              </td>
-
-              <td className="px-5 py-4 text-sm text-slate-700">
-                ฿{product.minPrice.toLocaleString()}
-              </td>
-
-              <td className="px-5 py-4 text-sm text-slate-700">
-                {product.stock}
-              </td>
-
-              <td className="px-5 py-4">
-                <div className="flex gap-2">
-                  <button
-                    onClick={() => onEdit(product)}
-                    className="rounded-lg bg-blue-500 px-3 py-2 text-sm font-medium text-white hover:bg-blue-600"
-                  >
-                    แก้ไข
-                  </button>
-
-                  <button
-                    onClick={() => onDelete(product.id)}
-                    className="rounded-lg bg-red-500 px-3 py-2 text-sm font-medium text-white hover:bg-red-600"
-                  >
-                    ลบ
-                  </button>
-                </div>
+          {loading ? (
+            <tr>
+              <td colSpan={6} className="px-5 py-6 text-center text-sm text-slate-500">
+                กำลังโหลดข้อมูล...
               </td>
             </tr>
-          ))}
+          ) : (
+            products.map((product) => (
+              <tr key={product.id} className="border-t border-slate-100">
+                <td className="px-5 py-4">
+                  <img
+                    src={product.image_url || "https://via.placeholder.com/80?text=No+Image"}
+                    alt={product.name}
+                    className="h-14 w-14 rounded-lg border border-slate-200 object-cover"
+                  />
+                </td>
+
+                <td className="px-5 py-4 text-sm font-medium text-slate-800">
+                  {product.name}
+                </td>
+
+                <td className="px-5 py-4 text-sm text-slate-700">
+                  ฿{Number(product.cost_price).toLocaleString()}
+                </td>
+
+                <td className="px-5 py-4 text-sm text-slate-700">
+                  ฿{Number(product.min_price).toLocaleString()}
+                </td>
+
+                <td className="px-5 py-4 text-sm text-slate-700">
+                  {product.stock}
+                </td>
+
+                <td className="px-5 py-4">
+                  <div className="flex gap-2">
+                    <button
+                      onClick={() => onEdit(product)}
+                      className="rounded-lg bg-blue-500 px-3 py-2 text-sm font-medium text-white hover:bg-blue-600"
+                    >
+                      แก้ไข
+                    </button>
+
+                    <button
+                      onClick={() => onDelete(product.id)}
+                      className="rounded-lg bg-red-500 px-3 py-2 text-sm font-medium text-white hover:bg-red-600"
+                    >
+                      ลบ
+                    </button>
+                  </div>
+                </td>
+              </tr>
+            ))
+          )}
         </tbody>
       </table>
     </div>

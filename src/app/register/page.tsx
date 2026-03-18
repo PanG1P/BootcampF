@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { registerReseller } from "@/services/auth.service";
 
 export default function RegisterPage() {
   const [form, setForm] = useState({
@@ -15,6 +16,7 @@ export default function RegisterPage() {
 
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
+  const [loading, setLoading] = useState(false);
 
   const handleChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
@@ -22,7 +24,19 @@ export default function RegisterPage() {
     setForm({ ...form, [e.target.name]: e.target.value });
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const resetForm = () => {
+    setForm({
+      name: "",
+      email: "",
+      phone: "",
+      password: "",
+      confirmPassword: "",
+      shopName: "",
+      address: "",
+    });
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError("");
     setSuccess("");
@@ -42,18 +56,41 @@ export default function RegisterPage() {
       return;
     }
 
-    setSuccess("สมัครสำเร็จ สถานะบัญชีของคุณคือ รออนุมัติ");
+    try {
+      setLoading(true);
+
+      const result = await registerReseller({
+        name: form.name,
+        email: form.email,
+        phone: form.phone,
+        password: form.password,
+        shop_name: form.shopName,
+        address: form.address,
+      });
+
+      setSuccess(result.message || "สมัครสำเร็จ กรุณารอการอนุมัติจาก Admin");
+      resetForm();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "สมัครสมาชิกไม่สำเร็จ");
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
     <div className="min-h-screen bg-slate-50 px-4 py-10">
-      <div className="mx-auto w-full max-w-2xl rounded-2xl bg-white p-6 shadow-sm border border-slate-200">
-        <h1 className="text-2xl font-bold text-slate-800">สมัครสมาชิก Reseller</h1>
+      <div className="mx-auto w-full max-w-2xl rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
+        <h1 className="text-2xl font-bold text-slate-800">
+          สมัครสมาชิก Reseller
+        </h1>
         <p className="mt-2 text-sm text-slate-500">
           หลังสมัครสำเร็จต้องรอ Admin อนุมัติก่อนเข้าสู่ระบบ
         </p>
 
-        <form onSubmit={handleSubmit} className="mt-6 grid grid-cols-1 gap-4 md:grid-cols-2">
+        <form
+          onSubmit={handleSubmit}
+          className="mt-6 grid grid-cols-1 gap-4 md:grid-cols-2"
+        >
           <input
             name="name"
             placeholder="ชื่อ-นามสกุล"
@@ -111,28 +148,29 @@ export default function RegisterPage() {
             placeholder="ที่อยู่"
             value={form.address}
             onChange={handleChange}
-            className="md:col-span-2 rounded-xl border border-slate-300 px-4 py-3"
+            className="rounded-xl border border-slate-300 px-4 py-3 md:col-span-2"
             rows={4}
             required
           />
 
           {error && (
-            <div className="md:col-span-2 rounded-xl bg-red-50 px-4 py-3 text-sm text-red-600">
+            <div className="rounded-xl bg-red-50 px-4 py-3 text-sm text-red-600 md:col-span-2">
               {error}
             </div>
           )}
 
           {success && (
-            <div className="md:col-span-2 rounded-xl bg-green-50 px-4 py-3 text-sm text-green-600">
+            <div className="rounded-xl bg-green-50 px-4 py-3 text-sm text-green-600 md:col-span-2">
               {success}
             </div>
           )}
 
           <button
             type="submit"
-            className="md:col-span-2 rounded-xl bg-slate-900 py-3 text-white hover:bg-slate-800"
+            disabled={loading}
+            className="rounded-xl bg-slate-900 py-3 text-white hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-60 md:col-span-2"
           >
-            สมัครสมาชิก
+            {loading ? "กำลังสมัครสมาชิก..." : "สมัครสมาชิก"}
           </button>
         </form>
       </div>

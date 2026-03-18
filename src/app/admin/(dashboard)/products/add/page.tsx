@@ -3,3 +3,6 @@
 // export default function AddProductPage() {
 //   return <ProductForm mode="add" />;
 // }
+export default function Page() {
+  return <div></div>
+}

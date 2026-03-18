@@ -1,8 +1,19 @@
 export interface Product {
   id: number;
   name: string;
-  category: string;
-  price: number;
+  description: string;
+  image_url: string;
+  cost_price: string;
+  min_price: string;
   stock: number;
-  status: "Active" | "Inactive";
+  created_at?: string;
+}
+
+export interface ProductPayload {
+  name: string;
+  description: string;
+  image_url: string;
+  cost_price: string;
+  min_price: string;
+  stock: number;
 }

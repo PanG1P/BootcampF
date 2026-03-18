@@ -1,63 +1,48 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import ProductTable from "@/components/admin/ProductTable";
 import ProductForm from "@/components/admin/ProductForm";
-
-type Product = {
-  id: number;
-  image: string;
-  name: string;
-  costPrice: number;
-  minPrice: number;
-  stock: number;
-  description?: string;
-};
-
-const initialProducts: Product[] = [
-  {
-    id: 1,
-    image: "https://via.placeholder.com/80?text=P1",
-    name: "Dental Mirror",
-    costPrice: 120,
-    minPrice: 150,
-    stock: 45,
-    description: "อุปกรณ์ตรวจในช่องปาก",
-  },
-  {
-    id: 2,
-    image: "https://via.placeholder.com/80?text=P2",
-    name: "Tooth Extraction Forceps",
-    costPrice: 850,
-    minPrice: 1000,
-    stock: 12,
-    description: "คีมถอนฟัน",
-  },
-  {
-    id: 3,
-    image: "https://via.placeholder.com/80?text=P3",
-    name: "Disposable Gloves",
-    costPrice: 220,
-    minPrice: 300,
-    stock: 100,
-    description: "ถุงมือใช้แล้วทิ้ง",
-  },
-  {
-    id: 4,
-    image: "https://via.placeholder.com/80?text=P4",
-    name: "Face Mask",
-    costPrice: 90,
-    minPrice: 120,
-    stock: 0,
-    description: "หน้ากากอนามัย",
-  },
-];
+import type { Product, ProductPayload } from "@/types/product";
+import {
+  createProduct,
+  deleteProduct,
+  getProducts,
+  updateProduct,
+} from "@/services/product.service";
 
 export default function AdminProductsPage() {
-  const [products, setProducts] = useState<Product[]>(initialProducts);
+  const [products, setProducts] = useState<Product[]>([]);
   const [isOpen, setIsOpen] = useState(false);
   const [mode, setMode] = useState<"add" | "edit">("add");
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [submitting, setSubmitting] = useState(false);
+  const [error, setError] = useState("");
+
+  const loadProducts = async () => {
+    try {
+      setLoading(true);
+      setError("");
+
+      const token = localStorage.getItem("token");
+      if (!token) {
+        setError("ไม่พบ token กรุณาเข้าสู่ระบบใหม่");
+        return;
+      }
+
+      const data = await getProducts(token);
+      setProducts(data);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "โหลดสินค้าไม่สำเร็จ");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    loadProducts();
+  }, []);
 
   const openAddModal = () => {
     setMode("add");
@@ -72,15 +57,71 @@ export default function AdminProductsPage() {
   };
 
   const closeModal = () => {
+    if (submitting) return;
     setIsOpen(false);
     setSelectedProduct(null);
   };
 
-  const handleDelete = (id: number) => {
+  const handleDelete = async (id: number) => {
     const confirmed = window.confirm("ต้องการลบสินค้านี้หรือไม่?");
     if (!confirmed) return;
 
-    setProducts((prev) => prev.filter((item) => item.id !== id));
+    try {
+      const token = localStorage.getItem("token");
+      if (!token) {
+        alert("ไม่พบ token กรุณาเข้าสู่ระบบใหม่");
+        return;
+      }
+
+      await deleteProduct(id, token);
+      await loadProducts();
+      alert("ลบสินค้าสำเร็จ");
+    } catch (err) {
+      alert(err instanceof Error ? err.message : "ลบสินค้าไม่สำเร็จ");
+    }
+  };
+
+  const handleSubmitProduct = async (payload: {
+    name: string;
+    description: string;
+    imageUrl: string;
+    costPrice: number;
+    minPrice: number;
+    stockQty: number;
+  }) => {
+    try {
+      setSubmitting(true);
+
+      const token = localStorage.getItem("token");
+      if (!token) {
+        alert("ไม่พบ token กรุณาเข้าสู่ระบบใหม่");
+        return;
+      }
+
+      const requestBody: ProductPayload = {
+        name: payload.name,
+        description: payload.description,
+        image_url: payload.imageUrl,
+        cost_price: String(payload.costPrice),
+        min_price: String(payload.minPrice),
+        stock: payload.stockQty,
+      };
+
+      if (mode === "add") {
+        await createProduct(requestBody, token);
+        alert("เพิ่มสินค้าเรียบร้อย");
+      } else if (selectedProduct) {
+        await updateProduct(selectedProduct.id, requestBody, token);
+        alert("แก้ไขสินค้าเรียบร้อย");
+      }
+
+      await loadProducts();
+      closeModal();
+    } catch (err) {
+      alert(err instanceof Error ? err.message : "บันทึกสินค้าไม่สำเร็จ");
+    } finally {
+      setSubmitting(false);
+    }
   };
 
   return (
@@ -88,78 +129,51 @@ export default function AdminProductsPage() {
       <section className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-bold text-slate-800">จัดการสินค้า</h1>
-          <p className="mt-1 text-slate-500">
-            แสดงรายการสินค้าทั้งหมดในระบบ
-          </p>
+          <p className="mt-1 text-slate-500">แสดงรายการสินค้าทั้งหมดในระบบ</p>
         </div>
 
         <button
           onClick={openAddModal}
-          className="rounded-xl bg-slate-900 px-4 py-3 text-sm font-semibold text-white hover:bg-slate-800"
+          disabled={loading}
+          className="rounded-xl bg-slate-900 px-4 py-3 text-sm font-semibold text-white hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-60"
         >
           + เพิ่มสินค้า
         </button>
       </section>
 
+      {error && (
+        <div className="rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-600">
+          {error}
+        </div>
+      )}
+
       <ProductTable
         products={products}
         onEdit={openEditModal}
         onDelete={handleDelete}
+        loading={loading}
       />
 
       {isOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
           <div className="max-h-[90vh] overflow-y-auto">
             <ProductForm
+              key={selectedProduct?.id ?? "new"}
               mode={mode}
               initialData={
                 selectedProduct
                   ? {
-                      name: selectedProduct.name,
-                      description: selectedProduct.description || "",
-                      costPrice: selectedProduct.costPrice,
-                      minPrice: selectedProduct.minPrice,
-                      stockQty: selectedProduct.stock,
-                      imageUrl: selectedProduct.image,
-                    }
+                    name: selectedProduct.name,
+                    description: selectedProduct.description || "",
+                    costPrice: Number(selectedProduct.cost_price),
+                    minPrice: Number(selectedProduct.min_price),
+                    stockQty: selectedProduct.stock,
+                    imageUrl: selectedProduct.image_url,
+                  }
                   : undefined
               }
               onClose={closeModal}
-              onSubmitSuccess={(payload) => {
-                if (mode === "add") {
-                  const newProduct: Product = {
-                    id: Date.now(),
-                    image: payload.image
-                      ? URL.createObjectURL(payload.image)
-                      : "https://via.placeholder.com/80?text=New",
-                    name: payload.name,
-                    costPrice: payload.costPrice,
-                    minPrice: payload.minPrice,
-                    stock: payload.stockQty,
-                    description: payload.description,
-                  };
-
-                  setProducts((prev) => [newProduct, ...prev]);
-                } else if (selectedProduct) {
-                  setProducts((prev) =>
-                    prev.map((item) =>
-                      item.id === selectedProduct.id
-                        ? {
-                            ...item,
-                            name: payload.name,
-                            costPrice: payload.costPrice,
-                            minPrice: payload.minPrice,
-                            stock: payload.stockQty,
-                            description: payload.description,
-                            image: payload.image
-                              ? URL.createObjectURL(payload.image)
-                              : item.image,
-                          }
-                        : item
-                    )
-                  );
-                }
-              }}
+              onSubmitSuccess={handleSubmitProduct}
             />
           </div>
         </div>

@@ -1,7 +1,9 @@
 export interface Order {
-  id: string;
-  customer: string;
-  total: number;
-  status: "Pending" | "Paid" | "Shipped" | "Cancelled";
-  date: string;
+  id: number;
+  order_number: string | null;
+  shop_id: number;
+  total_amount: string;
+  reseller_profit: string | null;
+  status: string;
+  created_at: string;
 }

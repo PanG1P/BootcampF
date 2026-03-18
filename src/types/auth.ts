@@ -13,8 +13,8 @@ export interface LoginResponse {
 export interface RegisterFormData {
   name: string;
   email: string;
-  phone: string;
   password: string;
+  phone: string;
   shop_name: string;
   address: string;
 }
