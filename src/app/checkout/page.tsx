@@ -1,9 +1,9 @@
 "use client";
 
-import { useState } from "react";
+import { Suspense, useState } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 
-export default function CheckoutPage() {
+function CheckoutContent() {
   const searchParams = useSearchParams();
   const router = useRouter();
 
@@ -23,7 +23,6 @@ export default function CheckoutPage() {
 
   return (
     <div className="min-h-screen bg-gray-100 p-10">
-
       <div className="max-w-5xl mx-auto">
 
         <h1 className="text-4xl font-bold mb-8 text-black">
@@ -115,7 +114,14 @@ export default function CheckoutPage() {
         </div>
 
       </div>
-
     </div>
+  );
+}
+
+export default function Page() {
+  return (
+    <Suspense fallback={<div>Loading...</div>}>
+      <CheckoutContent />
+    </Suspense>
   );
 }
