@@ -14,14 +14,39 @@ export async function apiFetch<T>(
   const res = await fetch(`${API_URL}${path}`, {
     ...options,
     headers: {
+      "Content-Type": "application/json",
       ...(options.headers || {}),
     },
   });
 
-  const data = await res.json().catch(() => null);
+  const contentType = res.headers.get("content-type") || "";
+  let data: unknown = null;
+
+  try {
+    if (contentType.includes("application/json")) {
+      data = await res.json();
+    } else {
+      data = await res.text();
+    }
+  } catch {
+    data = null;
+  }
 
   if (!res.ok) {
-    throw new Error(data?.message || "เกิดข้อผิดพลาดจากระบบ");
+    if (typeof data === "string" && data.trim()) {
+      throw new Error(data);
+    }
+
+    if (
+      data &&
+      typeof data === "object" &&
+      "message" in data &&
+      typeof (data as { message?: unknown }).message === "string"
+    ) {
+      throw new Error((data as { message: string }).message);
+    }
+
+    throw new Error("เกิดข้อผิดพลาดจากระบบ");
   }
 
   return data as T;

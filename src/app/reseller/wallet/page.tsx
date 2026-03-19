@@ -1,183 +1,224 @@
 "use client";
 
-import { useState } from "react";
-
-type Transaction = {
-  id: string;
-  type: "Sale" | "Withdraw";
-  amount: number;
-  date: string;
-};
+import { useEffect, useMemo, useState } from "react";
+import { getWalletByUserId, getWalletLogs } from "@/services/wallet.service";
+import type { Wallet, WalletLog } from "@/types/wallet";
 
 export default function WalletPage() {
+  const [wallet, setWallet] = useState<Wallet | null>(null);
+  const [transactions, setTransactions] = useState<WalletLog[]>([]);
+  const [selectedTx, setSelectedTx] = useState<WalletLog | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
 
-  const [balance, setBalance] = useState(12450);
-  const [selectedTx, setSelectedTx] = useState<Transaction | null>(null);
+  const totalIncome = useMemo(() => {
+    return transactions.reduce((sum, tx) => sum + Number(tx.amount || 0), 0);
+  }, [transactions]);
 
-  const [transactions, setTransactions] = useState<Transaction[]>([
-    { id: "TX001", type: "Sale", amount: 890, date: "2026-03-15" },
-    { id: "TX002", type: "Sale", amount: 390, date: "2026-03-14" },
-    { id: "TX003", type: "Withdraw", amount: -2000, date: "2026-03-13" },
-  ]);
+  useEffect(() => {
+    let isMounted = true;
 
-  // 🔥 withdraw modal
-  const [showWithdraw, setShowWithdraw] = useState(false);
-  const [withdrawAmount, setWithdrawAmount] = useState(0);
+    async function loadWalletData() {
+      try {
+        setLoading(true);
+        setError("");
 
-  const handleWithdraw = () => {
-    if (withdrawAmount <= 0) return alert("กรอกจำนวนเงินให้ถูกต้อง");
-    if (withdrawAmount > balance) return alert("เงินไม่พอ");
+        const token = localStorage.getItem("token") || "";
+        const userIdRaw = localStorage.getItem("userId") || "";
+        const userId = Number(userIdRaw);
 
-    const newTx: Transaction = {
-      id: "TX" + (transactions.length + 1).toString().padStart(3, "0"),
-      type: "Withdraw",
-      amount: -withdrawAmount,
-      date: new Date().toISOString().split("T")[0],
+        if (!token) {
+          throw new Error("ไม่พบ token กรุณาเข้าสู่ระบบใหม่");
+        }
+
+        if (!userId || Number.isNaN(userId)) {
+          throw new Error("ไม่พบ userId กรุณาตั้งค่า userId ก่อนใช้งาน");
+        }
+
+        const [walletData, walletLogs] = await Promise.all([
+          getWalletByUserId(userId, token),
+          getWalletLogs(userId, token),
+        ]);
+
+        if (!isMounted) return;
+
+        setWallet(walletData);
+        setTransactions(Array.isArray(walletLogs) ? walletLogs : []);
+      } catch (err) {
+        if (!isMounted) return;
+
+        const message =
+          err instanceof Error ? err.message : "ไม่สามารถโหลดข้อมูล wallet ได้";
+        setError(message);
+        console.error("Load wallet error:", err);
+      } finally {
+        if (!isMounted) return;
+        setLoading(false);
+      }
+    }
+
+    loadWalletData();
+
+    return () => {
+      isMounted = false;
     };
+  }, []);
 
-    setTransactions([newTx, ...transactions]);
-    setBalance(balance - withdrawAmount);
+  const formatCurrency = (value?: number | string | null) => {
+    const amount = Number(value ?? 0);
 
-    setWithdrawAmount(0);
-    setShowWithdraw(false);
+    return new Intl.NumberFormat("th-TH", {
+      style: "currency",
+      currency: "THB",
+      minimumFractionDigits: 0,
+      maximumFractionDigits: 2,
+    }).format(Number.isNaN(amount) ? 0 : amount);
   };
 
+  if (loading) {
+    return (
+      <div className="space-y-6 p-6">
+        <div className="h-8 w-40 animate-pulse rounded bg-slate-200" />
+
+        <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+          {Array.from({ length: 2 }).map((_, index) => (
+            <div
+              key={index}
+              className="rounded-xl border bg-white p-6 shadow"
+            >
+              <div className="h-4 w-28 animate-pulse rounded bg-slate-200" />
+              <div className="mt-4 h-8 w-36 animate-pulse rounded bg-slate-200" />
+            </div>
+          ))}
+        </div>
+
+        <div className="rounded-xl border bg-white shadow">
+          <div className="border-b p-4">
+            <div className="h-5 w-40 animate-pulse rounded bg-slate-200" />
+          </div>
+          <div className="space-y-3 p-4">
+            {Array.from({ length: 4 }).map((_, index) => (
+              <div
+                key={index}
+                className="h-12 animate-pulse rounded bg-slate-100"
+              />
+            ))}
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="space-y-6 p-6">
+        <h1 className="text-2xl font-bold text-black">My Wallet</h1>
+
+        <div className="rounded-xl border border-red-200 bg-red-50 p-5">
+          <h2 className="text-lg font-semibold text-red-700">
+            โหลดข้อมูลไม่สำเร็จ
+          </h2>
+          <p className="mt-2 text-red-600">{error}</p>
+        </div>
+      </div>
+    );
+  }
+
   return (
-    <div className="p-6 space-y-6">
+    <div className="space-y-6 p-6">
+      <h1 className="text-2xl font-bold text-black">My Wallet</h1>
 
-      <h1 className="text-2xl font-bold text-black">
-        My Wallet
-      </h1>
-
-      {/* Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-
-        <div className="bg-white border rounded-xl p-6 shadow">
+      <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+        <div className="rounded-xl border bg-white p-6 shadow">
           <p className="text-sm text-gray-600">Current Balance</p>
           <h2 className="text-3xl font-bold text-green-600">
-            ฿{balance.toLocaleString()}
+            {formatCurrency(wallet?.balance)}
           </h2>
         </div>
 
-        <div className="bg-white border rounded-xl p-6 shadow">
-          <p className="text-sm text-gray-600">Total Sales</p>
+        <div className="rounded-xl border bg-white p-6 shadow">
+          <p className="text-sm text-gray-600">Total Profit History</p>
           <h2 className="text-3xl font-bold text-blue-600">
-            ฿1,280
+            {formatCurrency(totalIncome)}
           </h2>
         </div>
-
-        <div className="bg-white border rounded-xl p-6 shadow flex items-center justify-center">
-          <button
-            onClick={() => setShowWithdraw(true)}
-            className="bg-black text-white px-6 py-3 rounded-lg hover:bg-gray-800"
-          >
-            Withdraw Money
-          </button>
-        </div>
-
       </div>
 
-      {/* Table */}
-      <div className="bg-white border rounded-xl shadow">
-
-        <div className="p-4 border-b">
-          <h2 className="font-semibold">Transaction History</h2>
+      <div className="rounded-xl border bg-white shadow">
+        <div className="border-b p-4">
+          <h2 className="font-semibold">Profit History</h2>
         </div>
 
-        <table className="w-full text-left">
-
-          <thead className="bg-gray-200">
-            <tr>
-              <th className="p-3">ID</th>
-              <th className="p-3">Type</th>
-              <th className="p-3">Amount</th>
-              <th className="p-3">Date</th>
-            </tr>
-          </thead>
-
-          <tbody>
-            {transactions.map((tx) => (
-              <tr
-                key={tx.id}
-                onClick={() => setSelectedTx(tx)}
-                className="border-t hover:bg-gray-50 cursor-pointer"
-              >
-                <td className="p-3">{tx.id}</td>
-                <td className="p-3">{tx.type}</td>
-                <td className={`p-3 font-semibold ${tx.amount > 0 ? "text-green-600" : "text-red-600"}`}>
-                  {tx.amount > 0 ? "+" : "-"}฿{Math.abs(tx.amount)}
-                </td>
-                <td className="p-3">{tx.date}</td>
+        <div className="overflow-x-auto">
+          <table className="w-full text-left">
+            <thead className="bg-gray-200">
+              <tr>
+                <th className="p-3">ID</th>
+                <th className="p-3">Order ID</th>
+                <th className="p-3">Type</th>
+                <th className="p-3">Amount</th>
+                <th className="p-3">Date</th>
               </tr>
-            ))}
-          </tbody>
+            </thead>
 
-        </table>
-
+            <tbody>
+              {transactions.length > 0 ? (
+                transactions.map((tx) => (
+                  <tr
+                    key={tx.id}
+                    onClick={() => setSelectedTx(tx)}
+                    className="cursor-pointer border-t hover:bg-gray-50"
+                  >
+                    <td className="p-3">{tx.id}</td>
+                    <td className="p-3">{tx.order_id ?? "-"}</td>
+                    <td className="p-3">Profit</td>
+                    <td className="p-3 font-semibold text-green-600">
+                      +{formatCurrency(tx.amount)}
+                    </td>
+                    <td className="p-3">
+                      {tx.created_at
+                        ? new Date(tx.created_at).toLocaleString("th-TH")
+                        : "-"}
+                    </td>
+                  </tr>
+                ))
+              ) : (
+                <tr>
+                  <td colSpan={5} className="p-6 text-center text-gray-500">
+                    ยังไม่มีประวัติรายได้
+                  </td>
+                </tr>
+              )}
+            </tbody>
+          </table>
+        </div>
       </div>
 
-      {/* 🔥 Withdraw Modal */}
-      {showWithdraw && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center">
-
-          <div className="bg-white p-6 rounded-xl w-80">
-
-            <h2 className="text-lg font-bold mb-4">
-              Withdraw Money
-            </h2>
-
-            <input
-              type="number"
-              placeholder="Enter amount"
-              value={withdrawAmount}
-              onChange={(e) => setWithdrawAmount(Number(e.target.value))}
-              className="w-full border p-2 rounded mb-4"
-            />
-
-            <div className="flex gap-2">
-              <button
-                onClick={handleWithdraw}
-                className="flex-1 bg-black text-white py-2 rounded"
-              >
-                Confirm
-              </button>
-
-              <button
-                onClick={() => setShowWithdraw(false)}
-                className="flex-1 bg-gray-300 py-2 rounded"
-              >
-                Cancel
-              </button>
-            </div>
-
-          </div>
-
-        </div>
-      )}
-
-      {/* Detail Modal */}
       {selectedTx && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center">
-
-          <div className="bg-white p-6 rounded-xl w-80">
-            <h2 className="font-bold mb-3">Transaction Detail</h2>
+        <div className="fixed inset-0 flex items-center justify-center bg-black/50">
+          <div className="w-80 rounded-xl bg-white p-6">
+            <h2 className="mb-3 font-bold">Transaction Detail</h2>
 
             <p>ID: {selectedTx.id}</p>
-            <p>Type: {selectedTx.type}</p>
-            <p>Amount: {selectedTx.amount}</p>
-            <p>Date: {selectedTx.date}</p>
+            <p>Order ID: {selectedTx.order_id ?? "-"}</p>
+            <p>Type: Profit</p>
+            <p>Amount: {formatCurrency(selectedTx.amount)}</p>
+            <p>
+              Date:{" "}
+              {selectedTx.created_at
+                ? new Date(selectedTx.created_at).toLocaleString("th-TH")
+                : "-"}
+            </p>
 
             <button
               onClick={() => setSelectedTx(null)}
-              className="mt-4 w-full bg-black text-white py-2 rounded"
+              className="mt-4 w-full rounded bg-black py-2 text-white"
             >
               Close
             </button>
           </div>
-
         </div>
       )}
-
     </div>
   );
 }

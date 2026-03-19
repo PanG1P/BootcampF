@@ -1,78 +1,240 @@
-import Link from "next/link";
+"use client";
 
-type Product = {
-  id: string;
-  name: string;
-  price: number;
-  stock: number;
-  image: string;
+import Link from "next/link";
+import { useEffect, useState } from "react";
+import { getShopBySlug } from "@/services/shop.service";
+import { getPublicShopProducts } from "@/services/shop-product.service";
+import type { ShopProduct } from "@/types/shop-product";
+
+type Shop = {
+  id: number;
+  user_id: number;
+  shop_name: string;
+  shop_slug: string;
+  description?: string;
 };
 
-const products: Product[] = [
-  { id: "C001", name: "Oversize T-Shirt", price: 390, stock: 80, image: "https://via.placeholder.com/400" },
-  { id: "C002", name: "Hoodie Streetwear", price: 890, stock: 40, image: "https://via.placeholder.com/400" },
-  { id: "C003", name: "Cargo Pants", price: 990, stock: 35, image: "https://via.placeholder.com/400" },
-  { id: "C004", name: "Denim Jacket", price: 1290, stock: 25, image: "https://via.placeholder.com/400" },
-  { id: "C005", name: "Basic Shirt", price: 450, stock: 70, image: "https://via.placeholder.com/400" },
-  { id: "C006", name: "Sport Shorts", price: 320, stock: 60, image: "https://via.placeholder.com/400" },
-  { id: "C007", name: "Black Hoodie", price: 850, stock: 30, image: "https://via.placeholder.com/400" },
-  { id: "C008", name: "Street Cap", price: 250, stock: 90, image: "https://via.placeholder.com/400" },
-];
+type ShopPageProps = {
+  params: Promise<{
+    slug: string;
+  }>;
+};
 
-export default function ShopPage() {
-  return (
-    <div className="p-10 bg-gray-50 min-h-screen">
+export default function ShopPage({ params }: ShopPageProps) {
+  const [shop, setShop] = useState<Shop | null>(null);
+  const [products, setProducts] = useState<ShopProduct[]>([]);
+  const [slug, setSlug] = useState("");
+  const [loading, setLoading] = useState(true);
+  const [productsLoading, setProductsLoading] = useState(false);
+  const [error, setError] = useState("");
 
-      <h1 className="text-3xl font-bold mb-8 text-slate-800">
-        🛍️ Shop Products
-      </h1>
+  useEffect(() => {
+    let isMounted = true;
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+    async function loadShopAndProducts() {
+      try {
+        setLoading(true);
+        setError("");
 
-        {products.map((product) => (
-          <Link
-            key={product.id}
-            href={`/checkout?id=${product.id}&name=${product.name}&price=${product.price}`}
-            className="group"
-          >
+        const resolvedParams = await params;
+        const currentSlug = resolvedParams.slug;
 
-            <div className="relative bg-white rounded-2xl shadow hover:shadow-lg transition overflow-hidden">
+        if (!isMounted) return;
+        setSlug(currentSlug);
 
-              <div className="overflow-hidden">
-                <img
-                  src={product.image}
-                  alt={product.name}
-                  className="w-full h-56 object-cover group-hover:scale-105 transition duration-300"
-                />
-              </div>
+        // โหลดร้าน
+        const shopData = await getShopBySlug(currentSlug);
 
-              <div className="p-4">
-                <h2 className="font-semibold text-slate-800">
-                  {product.name}
-                </h2>
+        if (!shopData) {
+          throw new Error("ไม่พบข้อมูลร้านค้า");
+        }
 
-                <p className="text-green-600 font-bold mt-1">
-                  ฿{product.price}
-                </p>
+        if (!isMounted) return;
+        setShop(shopData);
 
-                <p className="text-sm text-gray-500">
-                  Stock: {product.stock}
-                </p>
-              </div>
+        // โหลดสินค้า
+        setProductsLoading(true);
 
-              <div className="absolute inset-0 bg-black/60 backdrop-blur-sm opacity-0 group-hover:opacity-100 flex items-center justify-center transition">
-                <span className="text-white font-semibold text-lg">
-                  View Product
-                </span>
-              </div>
+        const shopProducts = await getPublicShopProducts(
+          Number(shopData.id)
+        );
 
+        if (!isMounted) return;
+        setProducts(Array.isArray(shopProducts) ? shopProducts : []);
+      } catch (err) {
+        if (!isMounted) return;
+        setError("ไม่สามารถโหลดข้อมูลร้านค้าได้");
+        console.error("Load shop error:", err);
+      } finally {
+        if (!isMounted) return;
+        setLoading(false);
+        setProductsLoading(false);
+      }
+    }
+
+    loadShopAndProducts();
+
+    return () => {
+      isMounted = false;
+    };
+  }, [params]);
+
+  const formatCurrency = (value?: number | string | null) => {
+    const amount = Number(value ?? 0);
+
+    return new Intl.NumberFormat("th-TH", {
+      style: "currency",
+      currency: "THB",
+      minimumFractionDigits: 0,
+      maximumFractionDigits: 2,
+    }).format(Number.isNaN(amount) ? 0 : amount);
+  };
+
+  const getProductImage = () => {
+    return "/placeholder-product.png";
+  };
+
+  // loading state
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-gray-50 px-6 py-10">
+        <div className="mx-auto max-w-7xl">
+          <div className="animate-pulse">
+            <div className="mb-4 h-10 w-64 rounded bg-gray-200" />
+            <div className="mb-10 h-6 w-96 rounded bg-gray-200" />
+
+            <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4">
+              {Array.from({ length: 8 }).map((_, index) => (
+                <div
+                  key={index}
+                  className="overflow-hidden rounded-2xl bg-white shadow"
+                >
+                  <div className="h-56 bg-gray-200" />
+                  <div className="p-4">
+                    <div className="mb-3 h-5 w-3/4 rounded bg-gray-200" />
+                    <div className="mb-2 h-5 w-1/3 rounded bg-gray-200" />
+                    <div className="h-4 w-1/2 rounded bg-gray-200" />
+                  </div>
+                </div>
+              ))}
             </div>
-
-          </Link>
-        ))}
-
+          </div>
+        </div>
       </div>
+    );
+  }
 
+  //  error state
+  if (error || !shop) {
+    return (
+      <div className="min-h-screen bg-gray-50 px-6 py-10">
+        <div className="mx-auto max-w-7xl rounded-2xl border border-red-200 bg-red-50 p-6">
+          <h1 className="text-2xl font-bold text-red-700">ไม่พบร้านค้า</h1>
+          <p className="mt-2 text-red-600">
+            {error || "ไม่สามารถโหลดร้านจาก slug นี้ได้"}
+          </p>
+          <p className="mt-2 text-sm text-gray-600">slug: {slug || "-"}</p>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="min-h-screen bg-gray-50 px-6 py-10">
+      <div className="mx-auto max-w-7xl">
+        {/* Shop Info */}
+        <div className="mb-8 rounded-3xl bg-white p-6 shadow-sm">
+          <p className="text-sm font-medium text-slate-500">Shop</p>
+
+          <h1 className="mt-2 text-3xl font-bold text-slate-800">
+            🛍️ {shop.shop_name}
+          </h1>
+
+          <p className="mt-2 text-sm text-slate-500">
+            Slug: {shop.shop_slug}
+          </p>
+
+          <p className="mt-4 text-slate-600">
+            {shop.description?.trim()
+              ? shop.description
+              : "ร้านค้านี้ยังไม่มีคำอธิบาย"}
+          </p>
+        </div>
+
+        {/* Header */}
+        <div className="mb-6 flex items-center justify-between">
+          <h2 className="text-2xl font-bold text-slate-800">
+            Shop Products
+          </h2>
+
+          <span className="rounded-full bg-slate-200 px-4 py-2 text-sm text-slate-700">
+            {products.length} รายการ
+          </span>
+        </div>
+
+        {/* Products */}
+        {productsLoading ? (
+          <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4">
+            {Array.from({ length: 8 }).map((_, index) => (
+              <div
+                key={index}
+                className="overflow-hidden rounded-2xl bg-white shadow"
+              >
+                <div className="h-56 animate-pulse bg-gray-200" />
+                <div className="p-4">
+                  <div className="mb-3 h-5 animate-pulse rounded bg-gray-200" />
+                  <div className="mb-2 h-5 w-1/2 animate-pulse rounded bg-gray-200" />
+                  <div className="h-4 w-1/3 animate-pulse rounded bg-gray-200" />
+                </div>
+              </div>
+            ))}
+          </div>
+        ) : products.length > 0 ? (
+          <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4">
+            {products.map((product) => {
+              const name = `Product #${product.product_id}`;
+              const price = Number(product.selling_price ?? 0);
+              const stock =
+                product.quantity === null || product.quantity === undefined
+                  ? 0
+                  : Number(product.quantity);
+
+              return (
+                <Link
+                  key={product.id}
+                  href={`/checkout?id=${product.product_id}&name=${encodeURIComponent(
+                    name
+                  )}&price=${price}&shopId=${shop.id}`}
+                  className="group"
+                >
+                  <div className="relative overflow-hidden rounded-2xl bg-white shadow hover:shadow-lg transition">
+                    <img
+                      src={getProductImage()}
+                      alt={name}
+                      className="h-56 w-full object-cover transition group-hover:scale-105"
+                    />
+                    <div className="p-4">
+                      <h3 className="font-semibold">{name}</h3>
+
+                      <p className="text-green-600 font-bold">
+                        {formatCurrency(price)}
+                      </p>
+
+                      <p className="text-sm text-gray-500">
+                        Stock: {stock}
+                      </p>
+                    </div>
+                  </div>
+                </Link>
+              );
+            })}
+          </div>
+        ) : (
+          <div className="text-center text-gray-500">
+            ร้านนี้ยังไม่มีสินค้า
+          </div>
+        )}
+      </div>
     </div>
   );
 }
