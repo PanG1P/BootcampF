@@ -11,6 +11,8 @@ export interface Order {
 export interface OrderPayload {
   shop_id: number;
   total_amount: number | string;
+  reseller_profit?: number | string | null;
+  status?: string;
 }
 
 export interface OrderItem {
@@ -30,9 +32,12 @@ export interface OrderItemPayload {
   quantity: number;
 }
 
-export interface OrderPayload {
-  shop_id: number;
-  total_amount: number | string;
-  reseller_profit?: number | string | null;
-  status?: string;
+export interface PaginatedResponse<T> {
+  content: T[];
+  totalElements: number;
+  totalPages: number;
+  size: number;
+  number: number;
+  first: boolean;
+  last: boolean;
 }

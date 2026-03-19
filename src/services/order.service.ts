@@ -4,14 +4,22 @@ import type {
   OrderItem,
   OrderItemPayload,
   OrderPayload,
+  PaginatedResponse,
 } from "@/types/order";
 
-export async function getOrders(token: string) {
-  return apiFetch<Order[]>("/orders", {
-    method: "GET",
-    headers: getAuthHeaders(token),
-    cache: "no-store",
-  });
+export async function getOrders(
+  token: string,
+  page = 0,
+  size = 10
+) {
+  return apiFetch<PaginatedResponse<Order>>(
+    `/orders?page=${page}&size=${size}`,
+    {
+      method: "GET",
+      headers: getAuthHeaders(token),
+      cache: "no-store",
+    }
+  );
 }
 
 export async function createOrder(payload: OrderPayload, token: string) {

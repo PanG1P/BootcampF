@@ -8,7 +8,7 @@ import { getOrders } from "@/services/order.service";
 import { getResellers } from "@/services/reseller.service";
 
 function getStatusBadge(status: string) {
-  const normalized = status.toLowerCase();
+  const normalized = (status || "").toLowerCase();
 
   if (normalized === "pending") {
     return (
@@ -58,12 +58,13 @@ export default function AdminDashboardPage() {
         return;
       }
 
-      const [ordersData, resellersResponse] = await Promise.all([
-        getOrders(token),
+      // ดึงเยอะไว้ก่อนเพื่อใช้สรุปใน dashboard
+      const [ordersResponse, resellersResponse] = await Promise.all([
+        getOrders(token, 0, 1000),
         getResellers(token),
       ]);
 
-      setOrders(ordersData);
+      setOrders(ordersResponse.content ?? []);
       setResellers(resellersResponse.data ?? []);
     } catch (err) {
       setError(err instanceof Error ? err.message : "โหลดข้อมูลแดชบอร์ดไม่สำเร็จ");
@@ -90,7 +91,7 @@ export default function AdminDashboardPage() {
     const totalOrders = orders.length;
 
     const pendingOrders = orders.filter(
-      (order) => order.status?.toLowerCase() === "pending"
+      (order) => (order.status || "").toLowerCase() === "pending"
     ).length;
 
     const totalApprovedResellers = resellers.filter(

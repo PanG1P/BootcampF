@@ -125,7 +125,7 @@ export default function OrderTable({
             </tr>
           ) : (
             orders.map((order) => {
-              const normalized = order.status.toLowerCase();
+              const normalized = (order.status || "").toLowerCase();
 
               return (
                 <tr key={order.id} className="border-t border-slate-100 align-top">
