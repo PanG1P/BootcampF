@@ -30,26 +30,42 @@ export default function ResellerDashboardPage() {
         setError("");
 
         const token = localStorage.getItem("token") || "";
-        const shopIdRaw = localStorage.getItem("shopId") || "";
-        const shopId = Number(shopIdRaw);
+        const shopId = Number(localStorage.getItem("shopId") || "1");
 
         if (!token) {
           throw new Error("ไม่พบ token กรุณาเข้าสู่ระบบใหม่");
         }
 
         if (!shopId || Number.isNaN(shopId)) {
-          throw new Error("ไม่พบ shopId กรุณาตั้งค่า shopId ก่อนใช้งาน");
+          throw new Error("shopId ไม่ถูกต้อง");
         }
 
-        const [summaryData, ordersData] = await Promise.all([
-          getDashboardSummary(shopId, token),
-          getOrdersByShopId(shopId, token),
-        ]);
+        let summaryData: DashboardSummary | null = null;
+        let ordersData: Order[] = [];
+
+        try {
+          summaryData = await getDashboardSummary(shopId, token);
+        } catch (err) {
+          console.warn("Dashboard summary not found, using default values.", err);
+          summaryData = {
+            shop_id: shopId,
+            total_orders: 0,
+            total_revenue: 0,
+          };
+        }
+
+        try {
+          const fetchedOrders = await getOrdersByShopId(shopId, token);
+          ordersData = Array.isArray(fetchedOrders) ? fetchedOrders : [];
+        } catch (err) {
+          console.warn("Orders not found or failed to load.", err);
+          ordersData = [];
+        }
 
         if (!isMounted) return;
 
         setSummary(summaryData);
-        setOrders(Array.isArray(ordersData) ? ordersData : []);
+        setOrders(ordersData);
       } catch (err) {
         if (!isMounted) return;
 
@@ -126,23 +142,6 @@ export default function ResellerDashboardPage() {
               <div className="mt-3 h-4 w-32 animate-pulse rounded bg-slate-200" />
             </div>
           ))}
-        </section>
-
-        <section className="rounded-2xl border border-slate-200 bg-white shadow-sm">
-          <div className="border-b border-slate-200 p-5">
-            <div className="h-6 w-40 animate-pulse rounded bg-slate-200" />
-          </div>
-
-          <div className="overflow-x-auto p-5">
-            <div className="space-y-3">
-              {Array.from({ length: 4 }).map((_, index) => (
-                <div
-                  key={index}
-                  className="h-12 animate-pulse rounded bg-slate-100"
-                />
-              ))}
-            </div>
-          </div>
         </section>
       </div>
     );
@@ -236,21 +235,17 @@ export default function ResellerDashboardPage() {
                     <td className="px-5 py-4 text-sm text-slate-700">
                       {order.id}
                     </td>
-
                     <td className="px-5 py-4 text-sm text-slate-700">
                       {order.order_number || "-"}
                     </td>
-
                     <td className="px-5 py-4 text-sm font-medium">
                       <span className={getStatusColor(order.status)}>
                         {order.status}
                       </span>
                     </td>
-
                     <td className="px-5 py-4 text-sm text-slate-700">
                       {formatCurrency(order.total_amount)}
                     </td>
-
                     <td className="px-5 py-4 text-sm text-slate-700">
                       {order.created_at
                         ? new Date(order.created_at).toLocaleString("th-TH")
