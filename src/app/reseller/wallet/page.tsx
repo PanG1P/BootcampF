@@ -16,8 +16,8 @@ export default function WalletPage() {
   }, [transactions]);
 
   const getCurrentUserId = () => {
-  return Number(localStorage.getItem("userId") || "0");
-};
+    return Number(localStorage.getItem("userId") || "0");
+  };
 
   useEffect(() => {
     let isMounted = true;
@@ -35,7 +35,7 @@ export default function WalletPage() {
         }
 
         if (!userId || Number.isNaN(userId)) {
-          throw new Error("userId ไม่ถูกต้อง");
+          throw new Error("ไม่พบ userId กรุณา login ใหม่");
         }
 
         const [walletData, walletLogs] = await Promise.all([

@@ -2,7 +2,7 @@ import { apiFetch, getAuthHeaders } from "./api";
 import type { Wallet, WalletLog, WalletPayload } from "@/types/wallet";
 
 export async function getWalletByUserId(userId: number, token: string) {
-  return apiFetch<Wallet>(`/wallet/user/${userId}`, {
+  return apiFetch<Wallet>(`/wallets/user/${userId}`, {
     method: "GET",
     headers: getAuthHeaders(token),
     cache: "no-store",
@@ -10,7 +10,7 @@ export async function getWalletByUserId(userId: number, token: string) {
 }
 
 export async function createWallet(payload: WalletPayload, token: string) {
-  return apiFetch<Wallet>("/wallet", {
+  return apiFetch<Wallet>("/wallets", {
     method: "POST",
     headers: getAuthHeaders(token),
     body: JSON.stringify(payload),
@@ -22,7 +22,7 @@ export async function depositWallet(
   payload: WalletPayload,
   token: string
 ) {
-  return apiFetch<Wallet>(`/wallet/user/${userId}/deposit`, {
+  return apiFetch<Wallet>(`/wallets/user/${userId}/deposit`, {
     method: "PUT",
     headers: getAuthHeaders(token),
     body: JSON.stringify(payload),
@@ -34,7 +34,7 @@ export async function withdrawWallet(
   payload: WalletPayload,
   token: string
 ) {
-  return apiFetch<Wallet>(`/wallet/user/${userId}/withdraw`, {
+  return apiFetch<Wallet>(`/wallets/user/${userId}/withdraw`, {
     method: "PUT",
     headers: getAuthHeaders(token),
     body: JSON.stringify(payload),
