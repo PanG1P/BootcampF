@@ -41,17 +41,40 @@ export default function RegisterPage() {
     setError("");
     setSuccess("");
 
-    if (form.password.length < 8) {
+    const payload = {
+      name: form.name.trim(),
+      email: form.email.trim(),
+      phone: form.phone.trim(),
+      password: form.password,
+      confirmPassword: form.confirmPassword,
+      shopName: form.shopName.trim(),
+      address: form.address.trim(),
+    };
+
+    if (
+      !payload.name ||
+      !payload.email ||
+      !payload.phone ||
+      !payload.password ||
+      !payload.confirmPassword ||
+      !payload.shopName ||
+      !payload.address
+    ) {
+      setError("กรุณากรอกข้อมูลให้ครบถ้วน");
+      return;
+    }
+
+    if (payload.password.length < 8) {
       setError("รหัสผ่านต้องอย่างน้อย 8 ตัวอักษร");
       return;
     }
 
-    if (form.password !== form.confirmPassword) {
+    if (payload.password !== payload.confirmPassword) {
       setError("ยืนยันรหัสผ่านไม่ตรงกัน");
       return;
     }
 
-    if (!/^\d{10}$/.test(form.phone)) {
+    if (!/^\d{10}$/.test(payload.phone)) {
       setError("เบอร์โทรศัพท์ต้องเป็นตัวเลข 10 หลัก");
       return;
     }
@@ -60,12 +83,12 @@ export default function RegisterPage() {
       setLoading(true);
 
       const result = await registerReseller({
-        name: form.name,
-        email: form.email,
-        phone: form.phone,
-        password: form.password,
-        shop_name: form.shopName,
-        address: form.address,
+        name: payload.name,
+        email: payload.email,
+        phone: payload.phone,
+        password: payload.password,
+        shop_name: payload.shopName,
+        address: payload.address,
       });
 
       setSuccess(result.message || "สมัครสำเร็จ กรุณารอการอนุมัติจาก Admin");
@@ -96,7 +119,8 @@ export default function RegisterPage() {
             placeholder="ชื่อ-นามสกุล"
             value={form.name}
             onChange={handleChange}
-            className="rounded-xl border border-slate-300 px-4 py-3"
+            className="rounded-xl border border-slate-300 px-4 py-3 text-slate-900 placeholder:text-slate-400"
+            autoComplete="name"
             required
           />
           <input
@@ -105,15 +129,18 @@ export default function RegisterPage() {
             placeholder="Email"
             value={form.email}
             onChange={handleChange}
-            className="rounded-xl border border-slate-300 px-4 py-3"
+            className="rounded-xl border border-slate-300 px-4 py-3 text-slate-900 placeholder:text-slate-400"
+            autoComplete="email"
             required
           />
           <input
             name="phone"
+            type="tel"
             placeholder="เบอร์โทรศัพท์"
             value={form.phone}
             onChange={handleChange}
-            className="rounded-xl border border-slate-300 px-4 py-3"
+            className="rounded-xl border border-slate-300 px-4 py-3 text-slate-900 placeholder:text-slate-400"
+            autoComplete="tel"
             required
           />
           <input
@@ -121,7 +148,7 @@ export default function RegisterPage() {
             placeholder="ชื่อร้านค้า"
             value={form.shopName}
             onChange={handleChange}
-            className="rounded-xl border border-slate-300 px-4 py-3"
+            className="rounded-xl border border-slate-300 px-4 py-3 text-slate-900 placeholder:text-slate-400"
             required
           />
           <input
@@ -130,7 +157,8 @@ export default function RegisterPage() {
             placeholder="รหัสผ่าน"
             value={form.password}
             onChange={handleChange}
-            className="rounded-xl border border-slate-300 px-4 py-3"
+            className="rounded-xl border border-slate-300 px-4 py-3 text-slate-900 placeholder:text-slate-400"
+            autoComplete="new-password"
             required
           />
           <input
@@ -139,7 +167,8 @@ export default function RegisterPage() {
             placeholder="ยืนยันรหัสผ่าน"
             value={form.confirmPassword}
             onChange={handleChange}
-            className="rounded-xl border border-slate-300 px-4 py-3"
+            className="rounded-xl border border-slate-300 px-4 py-3 text-slate-900 placeholder:text-slate-400"
+            autoComplete="new-password"
             required
           />
 
@@ -148,7 +177,7 @@ export default function RegisterPage() {
             placeholder="ที่อยู่"
             value={form.address}
             onChange={handleChange}
-            className="rounded-xl border border-slate-300 px-4 py-3 md:col-span-2"
+            className="rounded-xl border border-slate-300 px-4 py-3 text-slate-900 placeholder:text-slate-400 md:col-span-2"
             rows={4}
             required
           />

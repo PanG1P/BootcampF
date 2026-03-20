@@ -159,7 +159,7 @@ export default function ProductForm({
             name="name"
             value={form.name}
             onChange={handleChange}
-            className="w-full rounded-xl border border-slate-300 px-4 py-3 outline-none focus:border-slate-500"
+            className="w-full rounded-xl border border-slate-300 px-4 py-3 text-slate-900 placeholder:text-slate-400 outline-none focus:border-slate-500"
           />
           {errors.name && <p className="mt-1 text-sm text-red-500">{errors.name}</p>}
         </div>
@@ -173,7 +173,7 @@ export default function ProductForm({
             value={form.description}
             onChange={handleChange}
             rows={4}
-            className="w-full rounded-xl border border-slate-300 px-4 py-3 outline-none focus:border-slate-500"
+            className="w-full rounded-xl border border-slate-300 px-4 py-3 text-slate-900 placeholder:text-slate-400 outline-none focus:border-slate-500"
           />
           {errors.description && (
             <p className="mt-1 text-sm text-red-500">{errors.description}</p>
@@ -188,7 +188,7 @@ export default function ProductForm({
             name="imageUrl"
             value={form.imageUrl}
             onChange={handleChange}
-            className="w-full rounded-xl border border-slate-300 px-4 py-3 outline-none focus:border-slate-500"
+            className="w-full rounded-xl border border-slate-300 px-4 py-3 text-slate-900 placeholder:text-slate-400 outline-none focus:border-slate-500"
           />
           {errors.imageUrl && (
             <p className="mt-1 text-sm text-red-500">{errors.imageUrl}</p>
@@ -217,7 +217,7 @@ export default function ProductForm({
             step="0.01"
             value={form.costPrice}
             onChange={handleChange}
-            className="w-full rounded-xl border border-slate-300 px-4 py-3 outline-none focus:border-slate-500"
+            className="w-full rounded-xl border border-slate-300 px-4 py-3 text-slate-900 placeholder:text-slate-400 outline-none focus:border-slate-500"
           />
           {errors.costPrice && (
             <p className="mt-1 text-sm text-red-500">{errors.costPrice}</p>
@@ -235,7 +235,7 @@ export default function ProductForm({
             step="0.01"
             value={form.minPrice}
             onChange={handleChange}
-            className="w-full rounded-xl border border-slate-300 px-4 py-3 outline-none focus:border-slate-500"
+            className="w-full rounded-xl border border-slate-300 px-4 py-3 text-slate-900 placeholder:text-slate-400 outline-none focus:border-slate-500"
           />
           {errors.minPrice && (
             <p className="mt-1 text-sm text-red-500">{errors.minPrice}</p>
@@ -253,7 +253,7 @@ export default function ProductForm({
             step="1"
             value={form.stockQty}
             onChange={handleChange}
-            className="w-full rounded-xl border border-slate-300 px-4 py-3 outline-none focus:border-slate-500"
+            className="w-full rounded-xl border border-slate-300 px-4 py-3 text-slate-900 placeholder:text-slate-400 outline-none focus:border-slate-500"
           />
           {errors.stockQty && (
             <p className="mt-1 text-sm text-red-500">{errors.stockQty}</p>
