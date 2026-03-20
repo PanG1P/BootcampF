@@ -38,6 +38,15 @@ export default function LoginPage() {
         localStorage.setItem("status", result.status);
       }
 
+      if (result.userId !== undefined && result.userId !== null) {
+        localStorage.setItem("userId", String(result.userId));
+      }
+
+      if (result.shopId !== undefined && result.shopId !== null) {
+        localStorage.setItem("shopId", String(result.shopId));
+      }
+
+
       if (result.role === "admin") {
         router.push("/admin/dashboard");
         return;
@@ -71,7 +80,6 @@ export default function LoginPage() {
   return (
     <div className="min-h-screen flex items-center justify-center bg-slate-100 px-4">
       <div className="w-full max-w-md rounded-3xl bg-white p-8 shadow-xl border border-slate-200">
-
         <div className="mb-6">
           <p className="text-sm text-slate-500">Sign in</p>
           <h1 className="text-3xl font-bold text-slate-800 mt-1">
@@ -83,12 +91,8 @@ export default function LoginPage() {
         </div>
 
         <form onSubmit={handleLogin} className="space-y-4">
-
-          {/* Email */}
           <div>
-            <label className="block text-sm text-slate-600 mb-1">
-              Email
-            </label>
+            <label className="block text-sm text-slate-600 mb-1">Email</label>
             <input
               type="email"
               value={email}
@@ -100,7 +104,6 @@ export default function LoginPage() {
             />
           </div>
 
-          {/* Password */}
           <div>
             <label className="block text-sm text-slate-600 mb-1">
               Password

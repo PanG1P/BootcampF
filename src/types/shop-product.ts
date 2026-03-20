@@ -2,6 +2,7 @@ export type ShopProduct = {
   id: number;
   shop_id: number;
   product_id: number;
+  product_name?: string;
   selling_price: number;
   quantity?: number;
 };

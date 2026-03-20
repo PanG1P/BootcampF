@@ -8,6 +8,8 @@ export interface LoginResponse {
   role: string;
   status: string | null;
   message: string;
+  userId?: number | null;
+  shopId?: number | null;
 }
 
 export interface RegisterFormData {

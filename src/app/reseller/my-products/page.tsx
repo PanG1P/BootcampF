@@ -7,12 +7,13 @@ import {
   getShopProducts,
   updateShopProduct,
 } from "@/services/shop-product.service";
-import type { ShopProduct, ShopProductPayload } from "@/types/shop-product";
+import type { ShopProductPayload } from "@/types/shop-product";
 
 type EditableRow = {
   id: number;
   shop_id: number;
   product_id: number;
+  product_name?: string;
   selling_price: number;
   quantity: number;
   isNew?: boolean;
@@ -26,6 +27,10 @@ export default function MyProductsPage() {
   const [error, setError] = useState("");
   const [info, setInfo] = useState("");
 
+  const getCurrentShopId = () => {
+    return Number(localStorage.getItem("shopId") || "1");
+  };
+
   useEffect(() => {
     let isMounted = true;
 
@@ -36,15 +41,14 @@ export default function MyProductsPage() {
         setInfo("");
 
         const token = localStorage.getItem("token") || "";
-        const shopIdRaw = localStorage.getItem("shopId") || "";
-        const shopId = Number(shopIdRaw);
+        const shopId = getCurrentShopId();
 
         if (!token) {
           throw new Error("ไม่พบ token กรุณาเข้าสู่ระบบใหม่");
         }
 
         if (!shopId || Number.isNaN(shopId)) {
-          throw new Error("ไม่พบ shopId กรุณาตั้งค่า shopId ก่อนใช้งาน");
+          throw new Error("shopId ไม่ถูกต้อง");
         }
 
         const data = await getShopProducts(shopId, token);
@@ -55,6 +59,7 @@ export default function MyProductsPage() {
           id: Number(item.id),
           shop_id: Number(item.shop_id),
           product_id: Number(item.product_id),
+          product_name: item.product_name || `Product #${item.product_id}`,
           selling_price: Number(item.selling_price),
           quantity: Number(item.quantity ?? 0),
         }));
@@ -83,11 +88,10 @@ export default function MyProductsPage() {
   }, []);
 
   const handleAdd = () => {
-    const shopIdRaw = localStorage.getItem("shopId") || "";
-    const shopId = Number(shopIdRaw);
+    const shopId = getCurrentShopId();
 
     if (!shopId || Number.isNaN(shopId)) {
-      setError("ไม่พบ shopId กรุณาตั้งค่า shopId ก่อนเพิ่มสินค้า");
+      setError("shopId ไม่ถูกต้อง");
       return;
     }
 
@@ -97,6 +101,7 @@ export default function MyProductsPage() {
       id: tempId,
       shop_id: shopId,
       product_id: 0,
+      product_name: "",
       selling_price: 0,
       quantity: 0,
       isNew: true,
@@ -115,15 +120,15 @@ export default function MyProductsPage() {
       prev.map((p) =>
         p.id === id
           ? {
-              ...p,
-              [field]:
-                field === "product_id" ||
+            ...p,
+            [field]:
+              field === "product_id" ||
                 field === "selling_price" ||
                 field === "quantity" ||
                 field === "shop_id"
-                  ? Number(value)
-                  : value,
-            }
+                ? Number(value)
+                : value,
+          }
           : p
       )
     );
@@ -166,13 +171,15 @@ export default function MyProductsPage() {
           prev.map((p) =>
             p.id === product.id
               ? {
-                  id: Number(created.id),
-                  shop_id: Number(created.shop_id),
-                  product_id: Number(created.product_id),
-                  selling_price: Number(created.selling_price),
-                  quantity: Number(created.quantity ?? 0),
-                  isNew: false,
-                }
+                id: Number(created.id),
+                shop_id: Number(created.shop_id),
+                product_id: Number(created.product_id),
+                product_name:
+                  created.product_name || `Product #${created.product_id}`,
+                selling_price: Number(created.selling_price),
+                quantity: Number(created.quantity ?? 0),
+                isNew: false,
+              }
               : p
           )
         );
@@ -187,13 +194,15 @@ export default function MyProductsPage() {
         prev.map((p) =>
           p.id === product.id
             ? {
-                id: Number(updated.id),
-                shop_id: Number(updated.shop_id),
-                product_id: Number(updated.product_id),
-                selling_price: Number(updated.selling_price),
-                quantity: Number(updated.quantity ?? 0),
-                isNew: false,
-              }
+              id: Number(updated.id),
+              shop_id: Number(updated.shop_id),
+              product_id: Number(updated.product_id),
+              product_name:
+                updated.product_name || `Product #${updated.product_id}`,
+              selling_price: Number(updated.selling_price),
+              quantity: Number(updated.quantity ?? 0),
+              isNew: false,
+            }
             : p
         )
       );
@@ -244,7 +253,6 @@ export default function MyProductsPage() {
     return (
       <div className="p-6">
         <div className="mb-6 h-8 w-56 animate-pulse rounded bg-slate-200" />
-
         <div className="rounded-xl bg-white shadow">
           <div className="space-y-3 p-4">
             {Array.from({ length: 5 }).map((_, index) => (
@@ -295,6 +303,7 @@ export default function MyProductsPage() {
             <thead className="bg-gray-100">
               <tr>
                 <th className="p-4">Product ID</th>
+                <th className="p-4">Product Name</th>
                 <th className="p-4">Selling Price (฿)</th>
                 <th className="p-4">Stock</th>
                 <th className="p-4">Action</th>
@@ -325,6 +334,10 @@ export default function MyProductsPage() {
                         />
                       </td>
 
+                      <td className="p-4 text-slate-700">
+                        {product.product_name || "-"}
+                      </td>
+
                       <td className="p-4">
                         <input
                           type="number"
@@ -345,13 +358,6 @@ export default function MyProductsPage() {
                         <input
                           type="number"
                           value={product.quantity}
-                          onChange={(e) =>
-                            handleChange(
-                              product.id,
-                              "quantity",
-                              Number(e.target.value)
-                            )
-                          }
                           className="w-24 rounded border p-2"
                           disabled
                         />
@@ -381,7 +387,7 @@ export default function MyProductsPage() {
                 })
               ) : (
                 <tr>
-                  <td colSpan={4} className="p-6 text-center text-gray-500">
+                  <td colSpan={5} className="p-6 text-center text-gray-500">
                     ยังไม่มีสินค้าในร้าน
                   </td>
                 </tr>
@@ -389,12 +395,6 @@ export default function MyProductsPage() {
             </tbody>
           </table>
         </div>
-      </div>
-
-      <div className="mt-4 rounded-lg border border-yellow-200 bg-yellow-50 p-4 text-sm text-yellow-800">
-        ตอนนี้ backend ที่มีใช้ข้อมูลหลักเป็น Product ID, Selling Price และ Stock
-        ถ้าต้องการให้แสดงชื่อสินค้า ต้องให้ backend ส่งชื่อสินค้ามาเพิ่ม หรือมี API
-        join ข้อมูล product ให้ด้วย
       </div>
     </div>
   );

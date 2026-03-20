@@ -15,6 +15,10 @@ export default function WalletPage() {
     return transactions.reduce((sum, tx) => sum + Number(tx.amount || 0), 0);
   }, [transactions]);
 
+  const getCurrentUserId = () => {
+  return Number(localStorage.getItem("userId") || "0");
+};
+
   useEffect(() => {
     let isMounted = true;
 
@@ -24,15 +28,14 @@ export default function WalletPage() {
         setError("");
 
         const token = localStorage.getItem("token") || "";
-        const userIdRaw = localStorage.getItem("userId") || "";
-        const userId = Number(userIdRaw);
+        const userId = getCurrentUserId();
 
         if (!token) {
           throw new Error("ไม่พบ token กรุณาเข้าสู่ระบบใหม่");
         }
 
         if (!userId || Number.isNaN(userId)) {
-          throw new Error("ไม่พบ userId กรุณาตั้งค่า userId ก่อนใช้งาน");
+          throw new Error("userId ไม่ถูกต้อง");
         }
 
         const [walletData, walletLogs] = await Promise.all([
