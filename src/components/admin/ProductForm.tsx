@@ -36,49 +36,46 @@ function buildInitialForm(initialData?: ProductFormProps["initialData"]): FormSt
   return {
     name: initialData?.name ?? "",
     description: initialData?.description ?? "",
-    costPrice:
-      initialData?.costPrice !== undefined ? String(initialData.costPrice) : "",
-    minPrice:
-      initialData?.minPrice !== undefined ? String(initialData.minPrice) : "",
-    stockQty:
-      initialData?.stockQty !== undefined ? String(initialData.stockQty) : "",
+    costPrice: initialData?.costPrice !== undefined ? String(initialData.costPrice) : "",
+    minPrice: initialData?.minPrice !== undefined ? String(initialData.minPrice) : "",
+    stockQty: initialData?.stockQty !== undefined ? String(initialData.stockQty) : "",
     imageUrl: initialData?.imageUrl ?? "",
   };
 }
 
-export default function ProductForm({
-  mode,
-  initialData,
-  onClose,
-  onSubmitSuccess,
-}: ProductFormProps) {
-  const [form, setForm] = useState<FormState>(() => buildInitialForm(initialData));
+type FieldProps = {
+  label: string;
+  error?: string;
+  children: React.ReactNode;
+  colSpan?: boolean;
+};
 
-  const [errors, setErrors] = useState<Partial<Record<keyof FormState, string>>>(
-    {}
+function Field({ label, error, children, colSpan }: FieldProps) {
+  return (
+    <div className={colSpan ? "md:col-span-2" : ""}>
+      <label className="mb-1.5 block text-xs font-medium uppercase tracking-wider text-slate-400">
+        {label}
+      </label>
+      {children}
+      {error && <p className="mt-1.5 text-xs text-red-500">{error}</p>}
+    </div>
   );
+}
+
+export default function ProductForm({ mode, initialData, onClose, onSubmitSuccess }: ProductFormProps) {
+  const [form, setForm] = useState<FormState>(() => buildInitialForm(initialData));
+  const [errors, setErrors] = useState<Partial<Record<keyof FormState, string>>>({});
 
   const preview = useMemo(() => form.imageUrl.trim(), [form.imageUrl]);
 
-  const handleChange = (
-    e: ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
-  ) => {
+  const handleChange = (e: ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
-
-    setForm((prev) => ({
-      ...prev,
-      [name]: value,
-    }));
-
-    setErrors((prev) => ({
-      ...prev,
-      [name]: "",
-    }));
+    setForm((prev) => ({ ...prev, [name]: value }));
+    setErrors((prev) => ({ ...prev, [name]: "" }));
   };
 
   const validate = () => {
     const nextErrors: Partial<Record<keyof FormState, string>> = {};
-
     if (!form.name.trim()) nextErrors.name = "กรุณากรอกชื่อสินค้า";
     if (!form.description.trim()) nextErrors.description = "กรุณากรอกรายละเอียดสินค้า";
     if (!form.imageUrl.trim()) nextErrors.imageUrl = "กรุณากรอกลิงก์รูปสินค้า";
@@ -87,29 +84,15 @@ export default function ProductForm({
     const minPrice = Number(form.minPrice);
     const stockQty = Number(form.stockQty);
 
-    if (!form.costPrice.trim()) {
-      nextErrors.costPrice = "กรุณากรอกราคาทุน";
-    } else if (Number.isNaN(costPrice) || costPrice <= 0) {
-      nextErrors.costPrice = "ราคาทุนต้องมากกว่า 0";
-    }
+    if (!form.costPrice.trim()) nextErrors.costPrice = "กรุณากรอกราคาทุน";
+    else if (Number.isNaN(costPrice) || costPrice <= 0) nextErrors.costPrice = "ราคาทุนต้องมากกว่า 0";
 
-    if (!form.minPrice.trim()) {
-      nextErrors.minPrice = "กรุณากรอกราคาขั้นต่ำ";
-    } else if (Number.isNaN(minPrice) || minPrice <= 0) {
-      nextErrors.minPrice = "ราคาขั้นต่ำต้องมากกว่า 0";
-    } else if (!Number.isNaN(costPrice) && minPrice < costPrice) {
-      nextErrors.minPrice = "ราคาขั้นต่ำต้องไม่น้อยกว่าราคาทุน";
-    }
+    if (!form.minPrice.trim()) nextErrors.minPrice = "กรุณากรอกราคาขั้นต่ำ";
+    else if (Number.isNaN(minPrice) || minPrice <= 0) nextErrors.minPrice = "ราคาขั้นต่ำต้องมากกว่า 0";
+    else if (!Number.isNaN(costPrice) && minPrice < costPrice) nextErrors.minPrice = "ราคาขั้นต่ำต้องไม่น้อยกว่าราคาทุน";
 
-    if (!form.stockQty.trim()) {
-      nextErrors.stockQty = "กรุณากรอกจำนวนสต็อก";
-    } else if (
-      Number.isNaN(stockQty) ||
-      !Number.isInteger(stockQty) ||
-      stockQty < 0
-    ) {
-      nextErrors.stockQty = "จำนวนสต็อกต้องเป็นจำนวนเต็มตั้งแต่ 0 ขึ้นไป";
-    }
+    if (!form.stockQty.trim()) nextErrors.stockQty = "กรุณากรอกจำนวนสต็อก";
+    else if (Number.isNaN(stockQty) || !Number.isInteger(stockQty) || stockQty < 0) nextErrors.stockQty = "จำนวนสต็อกต้องเป็นจำนวนเต็มตั้งแต่ 0 ขึ้นไป";
 
     setErrors(nextErrors);
     return Object.keys(nextErrors).length === 0;
@@ -118,7 +101,6 @@ export default function ProductForm({
   const handleSubmit = (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     if (!validate()) return;
-
     onSubmitSuccess?.({
       name: form.name.trim(),
       description: form.description.trim(),
@@ -129,154 +111,95 @@ export default function ProductForm({
     });
   };
 
+  const inputClass =
+    "w-full rounded-lg border border-slate-200 bg-slate-50 px-4 py-2.5 text-sm text-slate-900 placeholder:text-slate-300 outline-none transition focus:border-violet-400 focus:bg-white focus:ring-2 focus:ring-violet-500/20";
+
   return (
-    <div className="w-full min-w-[320px] max-w-2xl rounded-2xl bg-white p-6 shadow-xl">
-      <div className="mb-6 flex items-start justify-between gap-4">
+    <div className="w-full min-w-[320px] max-w-2xl overflow-hidden rounded-2xl bg-white shadow-2xl">
+
+      {/* Modal Header */}
+      <div className="flex items-center justify-between border-b border-slate-100 px-6 py-4">
         <div>
-          <h2 className="text-xl font-bold text-slate-800">
-            {mode === "add" ? "เพิ่มสินค้า" : "แก้ไขสินค้า"}
+          <h2 className="text-base font-semibold text-slate-800">
+            {mode === "add" ? "เพิ่มสินค้าใหม่" : "แก้ไขสินค้า"}
           </h2>
-          <p className="mt-1 text-sm text-slate-500">
+          <p className="mt-0.5 text-xs text-slate-400">
             กรอกข้อมูลสินค้าให้ครบถ้วนก่อนบันทึก
           </p>
         </div>
-
         <button
           type="button"
           onClick={onClose}
-          className="rounded-lg px-3 py-2 text-sm text-slate-500 hover:bg-slate-100"
+          className="flex h-8 w-8 items-center justify-center rounded-lg text-slate-400 transition hover:bg-slate-100 hover:text-slate-600"
         >
-          ปิด
+          <CloseIcon />
         </button>
       </div>
 
-      <form onSubmit={handleSubmit} className="grid grid-cols-1 gap-4 md:grid-cols-2">
-        <div className="md:col-span-2">
-          <label className="mb-1 block text-sm font-medium text-slate-700">
-            ชื่อสินค้า
-          </label>
-          <input
-            name="name"
-            value={form.name}
-            onChange={handleChange}
-            className="w-full rounded-xl border border-slate-300 px-4 py-3 text-slate-900 placeholder:text-slate-400 outline-none focus:border-slate-500"
-          />
-          {errors.name && <p className="mt-1 text-sm text-red-500">{errors.name}</p>}
-        </div>
+      {/* Form Body */}
+      <form onSubmit={handleSubmit}>
+        <div className="grid grid-cols-1 gap-4 p-6 md:grid-cols-2">
 
-        <div className="md:col-span-2">
-          <label className="mb-1 block text-sm font-medium text-slate-700">
-            รายละเอียดสินค้า
-          </label>
-          <textarea
-            name="description"
-            value={form.description}
-            onChange={handleChange}
-            rows={4}
-            className="w-full rounded-xl border border-slate-300 px-4 py-3 text-slate-900 placeholder:text-slate-400 outline-none focus:border-slate-500"
-          />
-          {errors.description && (
-            <p className="mt-1 text-sm text-red-500">{errors.description}</p>
+          <Field label="ชื่อสินค้า" error={errors.name} colSpan>
+            <input name="name" value={form.name} onChange={handleChange} placeholder="เช่น สินค้า A" className={inputClass} />
+          </Field>
+
+          <Field label="รายละเอียดสินค้า" error={errors.description} colSpan>
+            <textarea name="description" value={form.description} onChange={handleChange} rows={3} placeholder="อธิบายรายละเอียดสินค้า..." className={inputClass} />
+          </Field>
+
+          <Field label="ลิงก์รูปสินค้า" error={errors.imageUrl} colSpan>
+            <input name="imageUrl" value={form.imageUrl} onChange={handleChange} placeholder="https://..." className={inputClass} />
+          </Field>
+
+          {/* Image Preview */}
+          {preview && (
+            <div className="md:col-span-2">
+              <p className="mb-2 text-xs font-medium uppercase tracking-wider text-slate-400">ตัวอย่างรูป</p>
+              <div className="h-24 w-24 overflow-hidden rounded-xl border border-slate-200 bg-slate-50">
+                <img src={preview} alt="Preview" className="h-full w-full object-cover" />
+              </div>
+            </div>
           )}
+
+          <Field label="ราคาทุน (฿)" error={errors.costPrice}>
+            <input name="costPrice" type="number" min="0" step="0.01" value={form.costPrice} onChange={handleChange} placeholder="0.00" className={inputClass} />
+          </Field>
+
+          <Field label="ราคาขั้นต่ำ (฿)" error={errors.minPrice}>
+            <input name="minPrice" type="number" min="0" step="0.01" value={form.minPrice} onChange={handleChange} placeholder="0.00" className={inputClass} />
+          </Field>
+
+          <Field label="จำนวนสต็อก" error={errors.stockQty} colSpan>
+            <input name="stockQty" type="number" min="0" step="1" value={form.stockQty} onChange={handleChange} placeholder="0" className={inputClass} />
+          </Field>
         </div>
 
-        <div className="md:col-span-2">
-          <label className="mb-1 block text-sm font-medium text-slate-700">
-            ลิงก์รูปสินค้า
-          </label>
-          <input
-            name="imageUrl"
-            value={form.imageUrl}
-            onChange={handleChange}
-            className="w-full rounded-xl border border-slate-300 px-4 py-3 text-slate-900 placeholder:text-slate-400 outline-none focus:border-slate-500"
-          />
-          {errors.imageUrl && (
-            <p className="mt-1 text-sm text-red-500">{errors.imageUrl}</p>
-          )}
-        </div>
-
-        {preview && (
-          <div className="md:col-span-2">
-            <p className="mb-2 text-sm font-medium text-slate-700">ตัวอย่างรูป</p>
-            <img
-              src={preview}
-              alt="Preview"
-              className="h-40 w-40 rounded-xl border border-slate-200 object-cover"
-            />
-          </div>
-        )}
-
-        <div>
-          <label className="mb-1 block text-sm font-medium text-slate-700">
-            ราคาทุน
-          </label>
-          <input
-            name="costPrice"
-            type="number"
-            min="0"
-            step="0.01"
-            value={form.costPrice}
-            onChange={handleChange}
-            className="w-full rounded-xl border border-slate-300 px-4 py-3 text-slate-900 placeholder:text-slate-400 outline-none focus:border-slate-500"
-          />
-          {errors.costPrice && (
-            <p className="mt-1 text-sm text-red-500">{errors.costPrice}</p>
-          )}
-        </div>
-
-        <div>
-          <label className="mb-1 block text-sm font-medium text-slate-700">
-            ราคาขั้นต่ำ
-          </label>
-          <input
-            name="minPrice"
-            type="number"
-            min="0"
-            step="0.01"
-            value={form.minPrice}
-            onChange={handleChange}
-            className="w-full rounded-xl border border-slate-300 px-4 py-3 text-slate-900 placeholder:text-slate-400 outline-none focus:border-slate-500"
-          />
-          {errors.minPrice && (
-            <p className="mt-1 text-sm text-red-500">{errors.minPrice}</p>
-          )}
-        </div>
-
-        <div className="md:col-span-2">
-          <label className="mb-1 block text-sm font-medium text-slate-700">
-            จำนวนสต็อก
-          </label>
-          <input
-            name="stockQty"
-            type="number"
-            min="0"
-            step="1"
-            value={form.stockQty}
-            onChange={handleChange}
-            className="w-full rounded-xl border border-slate-300 px-4 py-3 text-slate-900 placeholder:text-slate-400 outline-none focus:border-slate-500"
-          />
-          {errors.stockQty && (
-            <p className="mt-1 text-sm text-red-500">{errors.stockQty}</p>
-          )}
-        </div>
-
-        <div className="mt-2 flex justify-end gap-3 md:col-span-2">
+        {/* Modal Footer */}
+        <div className="flex items-center justify-end gap-2 border-t border-slate-100 px-6 py-4">
           <button
             type="button"
             onClick={onClose}
-            className="rounded-xl border border-slate-300 px-4 py-3 text-sm font-medium text-slate-700 hover:bg-slate-50"
+            className="rounded-lg border border-slate-200 px-4 py-2 text-sm font-medium text-slate-600 transition hover:bg-slate-50 active:scale-95"
           >
             ยกเลิก
           </button>
-
           <button
             type="submit"
-            className="rounded-xl bg-slate-900 px-4 py-3 text-sm font-semibold text-white hover:bg-slate-800"
+            className="rounded-lg bg-slate-900 px-5 py-2 text-sm font-medium text-white transition hover:bg-slate-700 active:scale-95"
           >
             {mode === "add" ? "บันทึกสินค้า" : "อัปเดตสินค้า"}
           </button>
         </div>
       </form>
     </div>
+  );
+}
+
+function CloseIcon() {
+  return (
+    <svg width="14" height="14" viewBox="0 0 16 16" fill="none">
+      <path d="M3 3l10 10M13 3L3 13" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+    </svg>
   );
 }

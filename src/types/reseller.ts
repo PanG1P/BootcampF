@@ -3,7 +3,7 @@ export interface Reseller {
   name: string;
   email: string;
   phone: string | null;
-  status: "pending" | "approved" | "rejected";
+  status: "pending" | "approved" | "rejected" | "suspended";
   address: string | null;
   createdAt: string;
 }

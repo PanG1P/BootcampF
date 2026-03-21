@@ -1,3 +1,12 @@
+export type ProductInfo = {
+  id?: number;
+  name?: string;
+  stock?: number | null;
+  image?: string | null;
+  image_url?: string | null;
+  imageUrl?: string | null;
+};
+
 export type ShopProduct = {
   id: number;
   shop_id: number;
@@ -8,6 +17,7 @@ export type ShopProduct = {
   image?: string | null;
   image_url?: string | null;
   imageUrl?: string | null;
+  product?: ProductInfo;
 };
 
 export type ShopProductPayload = {
