@@ -20,19 +20,31 @@ export default function LoginPage() {
 
     setError("");
     setInfo("");
+
+    if (password.trim() === "") {
+      setError("รหัสผ่านห้ามเป็นค่าว่าง");
+      return;
+    }
+
+    if (/\s/.test(password)) {
+      setError("รหัสผ่านห้ามมีช่องว่าง");
+      return;
+    }
+
     setLoading(true);
 
     try {
       let result;
 
       try {
-        result = await adminLogin({ email, password });
+        result = await adminLogin({ email: email.trim(), password });
       } catch {
-        result = await resellerLogin({ email, password });
+        result = await resellerLogin({ email: email.trim(), password });
       }
 
       localStorage.setItem("token", result.token);
       localStorage.setItem("role", result.role);
+      localStorage.setItem("email", email.trim());
 
       if (result.status) {
         localStorage.setItem("status", result.status);
@@ -45,7 +57,6 @@ export default function LoginPage() {
       if (result.shopId !== undefined && result.shopId !== null) {
         localStorage.setItem("shopId", String(result.shopId));
       }
-
 
       if (result.role === "admin") {
         router.push("/admin/dashboard");
@@ -111,7 +122,7 @@ export default function LoginPage() {
             <input
               type="password"
               value={password}
-              onChange={(e) => setPassword(e.target.value)}
+              onChange={(e) => setPassword(e.target.value.replace(/\s/g, ""))}
               className="w-full rounded-2xl border border-slate-300 px-4 py-3 text-slate-900 placeholder:text-slate-400 outline-none focus:border-slate-500 focus:ring-2 focus:ring-slate-200"
               placeholder="กรอกรหัสผ่าน"
               autoComplete="current-password"

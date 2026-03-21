@@ -1,6 +1,8 @@
 "use client";
 
 import { useState } from "react";
+import Link from "next/link";
+import { ArrowLeft } from "lucide-react";
 import { registerReseller } from "@/services/auth.service";
 
 export default function RegisterPage() {
@@ -21,7 +23,20 @@ export default function RegisterPage() {
   const handleChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
   ) => {
-    setForm({ ...form, [e.target.name]: e.target.value });
+    const { name, value } = e.target;
+
+    if (name === "password" || name === "confirmPassword") {
+      const noSpaces = value.replace(/\s/g, "");
+      setForm({ ...form, [name]: noSpaces });
+      return;
+    }
+
+    if (name === "shopName") {
+      setForm({ ...form, shopName: value.slice(0, 25) });
+      return;
+    }
+
+    setForm({ ...form, [name]: value });
   };
 
   const resetForm = () => {
@@ -64,6 +79,16 @@ export default function RegisterPage() {
       return;
     }
 
+    if (payload.password.trim() === "" || payload.confirmPassword.trim() === "") {
+      setError("รหัสผ่านห้ามเป็นค่าว่าง");
+      return;
+    }
+
+    if (/\s/.test(payload.password) || /\s/.test(payload.confirmPassword)) {
+      setError("รหัสผ่านห้ามมีเว้นวรรค");
+      return;
+    }
+
     if (payload.password.length < 8) {
       setError("รหัสผ่านต้องอย่างน้อย 8 ตัวอักษร");
       return;
@@ -76,6 +101,11 @@ export default function RegisterPage() {
 
     if (!/^\d{10}$/.test(payload.phone)) {
       setError("เบอร์โทรศัพท์ต้องเป็นตัวเลข 10 หลัก");
+      return;
+    }
+
+    if (payload.shopName.length > 25) {
+      setError("ชื่อร้านต้องไม่เกิน 25 ตัวอักษร");
       return;
     }
 
@@ -103,6 +133,16 @@ export default function RegisterPage() {
   return (
     <div className="min-h-screen bg-slate-50 px-4 py-10">
       <div className="mx-auto w-full max-w-2xl rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
+        <div className="mb-4">
+          <Link
+            href="/login"
+            className="inline-flex items-center gap-2 rounded-xl border border-slate-300 px-4 py-2 text-sm font-medium text-slate-700 transition hover:bg-slate-100"
+          >
+            <ArrowLeft size={16} />
+            กลับไปหน้า Login
+          </Link>
+        </div>
+
         <h1 className="text-2xl font-bold text-slate-800">
           สมัครสมาชิก Reseller
         </h1>
@@ -123,6 +163,7 @@ export default function RegisterPage() {
             autoComplete="name"
             required
           />
+
           <input
             name="email"
             type="email"
@@ -133,6 +174,7 @@ export default function RegisterPage() {
             autoComplete="email"
             required
           />
+
           <input
             name="phone"
             type="tel"
@@ -143,14 +185,22 @@ export default function RegisterPage() {
             autoComplete="tel"
             required
           />
-          <input
-            name="shopName"
-            placeholder="ชื่อร้านค้า"
-            value={form.shopName}
-            onChange={handleChange}
-            className="rounded-xl border border-slate-300 px-4 py-3 text-slate-900 placeholder:text-slate-400"
-            required
-          />
+
+          <div>
+            <input
+              name="shopName"
+              placeholder="ชื่อร้านค้า"
+              value={form.shopName}
+              onChange={handleChange}
+              maxLength={25}
+              className="w-full rounded-xl border border-slate-300 px-4 py-3 text-slate-900 placeholder:text-slate-400"
+              required
+            />
+            <p className="mt-1 text-xs text-slate-500">
+              {form.shopName.length}/25 ตัวอักษร
+            </p>
+          </div>
+
           <input
             name="password"
             type="password"
@@ -161,6 +211,7 @@ export default function RegisterPage() {
             autoComplete="new-password"
             required
           />
+
           <input
             name="confirmPassword"
             type="password"

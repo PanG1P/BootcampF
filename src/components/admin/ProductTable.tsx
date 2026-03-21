@@ -5,7 +5,7 @@ import type { Product } from "@/types/product";
 type ProductTableProps = {
   products: Product[];
   onEdit: (product: Product) => void;
-  onDelete: (id: number) => void;
+  onDelete: (product: Product) => void;
   loading?: boolean;
 };
 
@@ -15,7 +15,6 @@ export default function ProductTable({
   onDelete,
   loading = false,
 }: ProductTableProps) {
-  // ถ้าไม่ได้โหลดแล้ว แต่ไม่มีข้อมูลสินค้า
   if (!loading && products.length === 0) {
     return (
       <div className="rounded-2xl border border-slate-200 bg-white p-6 text-sm text-slate-500 shadow-sm">
@@ -77,8 +76,13 @@ export default function ProductTable({
                   />
                 </td>
 
-                <td className="px-5 py-4 text-sm font-medium text-slate-800">
-                  {product.name}
+                <td className="px-5 py-4">
+                  <p className="text-sm font-medium text-slate-800">
+                    {product.name}
+                  </p>
+                  <p className="text-xs text-slate-500">
+                    {product.description || "-"}
+                  </p>
                 </td>
 
                 <td className="px-5 py-4 text-sm text-slate-700">
@@ -103,7 +107,7 @@ export default function ProductTable({
                     </button>
 
                     <button
-                      onClick={() => onDelete(product.id)}
+                      onClick={() => onDelete(product)}
                       className="rounded-xl bg-red-500 px-3 py-2 text-sm font-medium text-white transition hover:bg-red-600"
                     >
                       ลบ

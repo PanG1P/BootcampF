@@ -20,21 +20,43 @@ type PopupState = {
   onConfirm?: () => void;
 };
 
+function getDeleteProductErrorMessage(error: unknown) {
+  const raw = error instanceof Error ? error.message.toLowerCase() : "";
+
+  if (
+    raw.includes("order_items") ||
+    raw.includes("product_id") ||
+    raw.includes("violates") ||
+    raw.includes("constraint")
+  ) {
+    return "ไม่สามารถลบสินค้านี้ได้ เนื่องจากมีรายการสั่งซื้อที่อ้างอิงอยู่";
+  }
+
+  if (raw.includes("400")) {
+    return "ลบสินค้าไม่สำเร็จ กรุณาตรวจสอบข้อมูลอีกครั้ง";
+  }
+
+  if (raw.includes("404")) {
+    return "ไม่พบสินค้าที่ต้องการลบ";
+  }
+
+  if (raw.includes("500")) {
+    return "เกิดข้อผิดพลาดจากเซิร์ฟเวอร์ กรุณาลองใหม่อีกครั้ง";
+  }
+
+  return "ลบสินค้าไม่สำเร็จ กรุณาลองใหม่อีกครั้ง";
+}
+
 export default function AdminProductsPage() {
   const [products, setProducts] = useState<Product[]>([]);
   const [isOpen, setIsOpen] = useState(false);
   const [mode, setMode] = useState<"add" | "edit">("add");
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
 
-  // loading = โหลดตาราง
   const [loading, setLoading] = useState(true);
-
-  // submitting = กำลังส่งข้อมูลจาก form
   const [submitting, setSubmitting] = useState(false);
-
   const [error, setError] = useState("");
 
-  // state กลางสำหรับ popup
   const [popup, setPopup] = useState<PopupState>({
     open: false,
     type: "success",
@@ -75,34 +97,30 @@ export default function AdminProductsPage() {
     loadProducts();
   }, []);
 
-  // เปิด modal สำหรับเพิ่มสินค้า
   const openAddModal = () => {
     setMode("add");
     setSelectedProduct(null);
     setIsOpen(true);
   };
 
-  // เปิด modal สำหรับแก้ไขสินค้า
   const openEditModal = (product: Product) => {
     setMode("edit");
     setSelectedProduct(product);
     setIsOpen(true);
   };
 
-  // ปิด modal และเคลียร์ค่าที่เลือกอยู่
   const closeModal = () => {
     if (submitting) return;
     setIsOpen(false);
     setSelectedProduct(null);
   };
 
-  // ลบสินค้า โดยแสดง popup ยืนยันก่อน
-  const handleDelete = async (id: number) => {
+  const handleDelete = async (product: Product) => {
     setPopup({
       open: true,
       type: "confirm",
       title: "ยืนยันการลบสินค้า",
-      message: "เมื่อกดลบแล้ว รายการสินค้านี้จะถูกลบออกจากระบบ",
+      message: `คุณต้องการลบสินค้า "${product.name}" ใช่หรือไม่?`,
       onConfirm: async () => {
         try {
           closePopup();
@@ -118,28 +136,27 @@ export default function AdminProductsPage() {
             return;
           }
 
-          await deleteProduct(id, token);
+          await deleteProduct(product.id, token);
           await loadProducts();
 
           setPopup({
             open: true,
             type: "success",
             title: "ลบสินค้าสำเร็จ",
-            message: "รายการสินค้าถูกลบออกจากระบบแล้ว",
+            message: `สินค้า "${product.name}" ถูกลบเรียบร้อยแล้ว`,
           });
         } catch (err) {
           setPopup({
             open: true,
             type: "error",
             title: "ลบสินค้าไม่สำเร็จ",
-            message: err instanceof Error ? err.message : "เกิดข้อผิดพลาดบางอย่าง",
+            message: getDeleteProductErrorMessage(err),
           });
         }
       },
     });
   };
 
-  // submit form เพิ่ม / แก้ไขสินค้า
   const handleSubmitProduct = async (payload: {
     name: string;
     description: string;
@@ -162,7 +179,6 @@ export default function AdminProductsPage() {
         return;
       }
 
-      // แปลงข้อมูลให้ตรงกับโครงสร้างที่ backend ต้องการ
       const requestBody: ProductPayload = {
         name: payload.name,
         description: payload.description,
@@ -209,7 +225,6 @@ export default function AdminProductsPage() {
   return (
     <>
       <div className="space-y-6">
-        {/* ส่วนหัวของหน้า */}
         <section className="flex flex-col gap-4 rounded-2xl border border-slate-200 bg-white p-5 shadow-sm sm:flex-row sm:items-center sm:justify-between">
           <div>
             <h1 className="text-2xl font-bold text-slate-800">จัดการสินค้า</h1>
@@ -227,14 +242,12 @@ export default function AdminProductsPage() {
           </button>
         </section>
 
-        {/* แสดง error จากการโหลดข้อมูล */}
         {error && (
           <div className="rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-600">
             {error}
           </div>
         )}
 
-        {/* ตารางสินค้า */}
         <ProductTable
           products={products}
           onEdit={openEditModal}
@@ -242,7 +255,6 @@ export default function AdminProductsPage() {
           loading={loading}
         />
 
-        {/* modal ฟอร์มเพิ่ม/แก้ไขสินค้า */}
         {isOpen && (
           <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4 backdrop-blur-sm">
             <div className="max-h-[90vh] overflow-y-auto">
@@ -269,7 +281,6 @@ export default function AdminProductsPage() {
         )}
       </div>
 
-      {/* popup กลางจอ */}
       <ActionPopup
         open={popup.open}
         type={popup.type}
@@ -277,8 +288,8 @@ export default function AdminProductsPage() {
         message={popup.message}
         onClose={closePopup}
         onConfirm={popup.onConfirm}
-        confirmText="ลบสินค้า"
-        cancelText="ยกเลิก"
+        confirmText={popup.type === "confirm" ? "ลบสินค้า" : "ตกลง"}
+        cancelText={popup.type === "confirm" ? "ยกเลิก" : undefined}
       />
     </>
   );
