@@ -9,80 +9,63 @@ function subscribe(callback: () => void) {
   window.addEventListener("storage", callback);
   return () => window.removeEventListener("storage", callback);
 }
-
-function getSnapshot() {
-  return localStorage.getItem("email") || "";
-}
-
-function getServerSnapshot() {
-  return "";
-}
+function getSnapshot() { return localStorage.getItem("email") || ""; }
+function getServerSnapshot() { return ""; }
 
 export default function AdminNavbar() {
   const router = useRouter();
   const [openLogoutPopup, setOpenLogoutPopup] = useState(false);
 
-  const userEmail = useSyncExternalStore(
-    subscribe,
-    getSnapshot,
-    getServerSnapshot
-  );
+  const userEmail = useSyncExternalStore(subscribe, getSnapshot, getServerSnapshot);
 
   const handleLogout = () => {
-    //  เคลียร์ทุกอย่าง
     localStorage.clear();
     sessionStorage.clear();
-
-    //  เคลียร์ cookie (เผื่อมีในอนาคต)
-    document.cookie
-      .split(";")
-      .forEach((c) => {
-        document.cookie =
-          c.trim().split("=")[0] +
-          "=;expires=Thu, 01 Jan 1970 00:00:00 UTC;path=/";
-      });
-
-    //  redirect แบบกันย้อนกลับ
+    document.cookie.split(";").forEach((c) => {
+      document.cookie = c.trim().split("=")[0] + "=;expires=Thu, 01 Jan 1970 00:00:00 UTC;path=/";
+    });
     router.replace("/login");
-
-    //  รีเฟรชเพื่อเคลียร์ state ทั้งหมด
-    setTimeout(() => {
-      window.location.reload();
-    }, 100);
+    setTimeout(() => { window.location.reload(); }, 100);
   };
 
   return (
     <>
-      <header className="sticky top-0 z-40 border-b border-slate-200 bg-white/90 backdrop-blur">
-        <div className="flex h-16 items-center justify-between px-6">
-          <div>
-            <h2 className="text-lg font-bold text-slate-800 md:text-xl">
-              Admin Dashboard
-            </h2>
-            <p className="text-xs text-slate-500">
-              จัดการข้อมูลในระบบตัวแทนจำหน่าย
-            </p>
+      <header className="sticky top-0 z-40 border-b border-slate-100 bg-white/95 backdrop-blur">
+        <div className="flex h-14 items-center justify-between px-6">
+
+          {/* Left: breadcrumb-style title */}
+          <div className="flex items-center gap-2">
+            <span className="text-sm text-slate-400">Admin</span>
+            <span className="text-slate-300">/</span>
+            <span className="text-sm font-medium text-slate-700">Dashboard</span>
           </div>
 
-          <div className="flex items-center gap-4">
-            <div className="hidden text-right sm:block">
-              <p className="text-sm font-semibold text-slate-800">Admin User</p>
-              <p className="text-xs text-slate-500">
-                {userEmail || "ไม่พบอีเมล"}
-              </p>
+          {/* Right: user + logout */}
+          <div className="flex items-center gap-3">
+            {/* User info */}
+            <div className="hidden items-center gap-2.5 sm:flex">
+              <div className="flex h-8 w-8 items-center justify-center rounded-full bg-slate-100 text-slate-600">
+                <ShieldCheck size={15} />
+              </div>
+              <div className="text-right">
+                <p className="text-xs font-medium text-slate-700 leading-none">Admin User</p>
+                <p className="mt-0.5 text-[11px] text-slate-400 leading-none">
+                  {userEmail || "ไม่พบอีเมล"}
+                </p>
+              </div>
             </div>
 
-            <div className="flex h-10 w-10 items-center justify-center rounded-full bg-slate-100 text-slate-700">
-              <ShieldCheck size={18} />
-            </div>
+            {/* Divider */}
+            <div className="hidden h-5 w-px bg-slate-200 sm:block" />
 
+            {/* Logout */}
             <button
               type="button"
               onClick={() => setOpenLogoutPopup(true)}
-              className="inline-flex items-center gap-2 rounded-xl bg-red-500 px-3 py-2 text-sm font-medium text-white transition hover:bg-red-600"
+              className="flex items-center gap-1.5 rounded-lg border border-slate-200 px-3 py-1.5 text-xs font-medium text-slate-600 transition hover:border-red-200 hover:bg-red-50 hover:text-red-600 active:scale-95"
             >
-              <LogOut size={16} />
-              Logout
+              <LogOut size={13} />
+              ออกจากระบบ
             </button>
           </div>
         </div>
