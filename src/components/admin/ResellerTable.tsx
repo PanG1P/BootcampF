@@ -2,8 +2,14 @@
 
 import type { Reseller } from "@/types/reseller";
 
+type ResellerStatus = "pending" | "approved" | "rejected" | "suspended";
+
+type ResellerWithSuspend = Reseller & {
+  status: ResellerStatus;
+};
+
 type ResellerTableProps = {
-  resellers: Reseller[];
+  resellers: ResellerWithSuspend[];
   onApprove: (id: number) => void;
   onReject: (id: number) => void;
   onSuspend: (id: number) => void;
@@ -11,20 +17,7 @@ type ResellerTableProps = {
   loading?: boolean;
 };
 
-// function getStatusLabel(status: Reseller["status"]) {
-//   switch (status) {
-//     case "pending":
-//       return "รออนุมัติ";
-//     case "approved":
-//       return "อนุมัติแล้ว";
-//     case "rejected":
-//       return "ถูกปฏิเสธ";
-//     default:
-//       return status;
-//   }
-// }
-
-function getStatusBadge(status: Reseller["status"]) {
+function getStatusBadge(status: ResellerStatus) {
   switch (status) {
     case "pending":
       return (
@@ -42,6 +35,12 @@ function getStatusBadge(status: Reseller["status"]) {
       return (
         <span className="rounded-full bg-red-100 px-3 py-1 text-xs font-semibold text-red-700">
           ถูกปฏิเสธ
+        </span>
+      );
+    case "suspended":
+      return (
+        <span className="rounded-full bg-orange-100 px-3 py-1 text-xs font-semibold text-orange-700">
+          ถูกระงับ
         </span>
       );
     default:
@@ -120,8 +119,9 @@ export default function ResellerTable({
             resellers.map((reseller) => (
               <tr
                 key={reseller.id}
-                className={`border-t border-slate-100 ${reseller.status === "pending" ? "bg-yellow-50" : ""
-                  }`}
+                className={`border-t border-slate-100 ${
+                  reseller.status === "pending" ? "bg-yellow-50" : ""
+                }`}
               >
                 <td className="px-5 py-4 text-sm font-medium text-slate-800">
                   {reseller.name}
@@ -182,6 +182,15 @@ export default function ResellerTable({
                         className="rounded-lg bg-blue-500 px-3 py-2 text-sm font-medium text-white hover:bg-blue-600"
                       >
                         อนุมัติอีกครั้ง
+                      </button>
+                    )}
+
+                    {reseller.status === "suspended" && (
+                      <button
+                        onClick={() => onReactivate(reseller.id)}
+                        className="rounded-lg bg-blue-500 px-3 py-2 text-sm font-medium text-white hover:bg-blue-600"
+                      >
+                        เปิดใช้งานอีกครั้ง
                       </button>
                     )}
                   </div>

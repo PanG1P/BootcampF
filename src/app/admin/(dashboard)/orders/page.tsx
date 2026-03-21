@@ -2,12 +2,30 @@
 
 import { useCallback, useEffect, useMemo, useState } from "react";
 import OrderTable from "@/components/admin/OrderTable";
+import ActionPopup from "@/components/common/ActionPopup";
 import type { Order } from "@/types/order";
 import {
   deleteOrder,
   getOrders,
   updateOrderStatus,
 } from "@/services/order.service";
+
+type PopupState = {
+  open: boolean;
+  type: "success" | "error" | "confirm";
+  title: string;
+  message: string;
+  confirmText?: string;
+  cancelText?: string;
+  onConfirm?: () => void;
+};
+
+const initialPopupState: PopupState = {
+  open: false,
+  type: "success",
+  title: "",
+  message: "",
+};
 
 export default function AdminOrdersPage() {
   const [orders, setOrders] = useState<Order[]>([]);
@@ -18,6 +36,54 @@ export default function AdminOrdersPage() {
   const [size, setSize] = useState(10);
   const [totalPages, setTotalPages] = useState(1);
   const [totalElements, setTotalElements] = useState(0);
+
+  const [popup, setPopup] = useState<PopupState>(initialPopupState);
+
+  const closePopup = () => {
+    setPopup(initialPopupState);
+  };
+
+  const showSuccessPopup = (title: string, message: string) => {
+    setPopup({
+      open: true,
+      type: "success",
+      title,
+      message,
+    });
+  };
+
+  const showErrorPopup = (title: string, message: string) => {
+    setPopup({
+      open: true,
+      type: "error",
+      title,
+      message,
+    });
+  };
+
+  const showConfirmPopup = ({
+    title,
+    message,
+    confirmText = "ยืนยัน",
+    cancelText = "ยกเลิก",
+    onConfirm,
+  }: {
+    title: string;
+    message: string;
+    confirmText?: string;
+    cancelText?: string;
+    onConfirm: () => void;
+  }) => {
+    setPopup({
+      open: true,
+      type: "confirm",
+      title,
+      message,
+      confirmText,
+      cancelText,
+      onConfirm,
+    });
+  };
 
   const loadOrders = useCallback(async (currentPage: number, currentSize: number) => {
     try {
@@ -45,73 +111,109 @@ export default function AdminOrdersPage() {
     loadOrders(page, size);
   }, [page, size, loadOrders]);
 
-  const handleMarkAsShipped = async (id: number) => {
-    try {
-      const token = localStorage.getItem("token");
-      if (!token) {
-        alert("ไม่พบ token กรุณาเข้าสู่ระบบใหม่");
-        return;
-      }
+  const handleMarkAsShipped = (id: number) => {
+    showConfirmPopup({
+      title: "ยืนยันการเปลี่ยนสถานะ",
+      message: 'ต้องการเปลี่ยนออเดอร์นี้เป็น "จัดส่งแล้ว" ใช่หรือไม่?',
+      confirmText: "ยืนยัน",
+      cancelText: "ยกเลิก",
+      onConfirm: async () => {
+        closePopup();
 
-      const updatedOrder = await updateOrderStatus(id, "SHIPPED", token);
+        try {
+          const token = localStorage.getItem("token");
+          if (!token) {
+            showErrorPopup("เกิดข้อผิดพลาด", "ไม่พบ token กรุณาเข้าสู่ระบบใหม่");
+            return;
+          }
 
-      setOrders((prev) =>
-        prev.map((order) => (order.id === id ? updatedOrder : order))
-      );
+          const updatedOrder = await updateOrderStatus(id, "SHIPPED", token);
 
-      alert('เปลี่ยนสถานะเป็น "จัดส่งแล้ว" เรียบร้อย');
-    } catch (err) {
-      alert(err instanceof Error ? err.message : "เปลี่ยนสถานะไม่สำเร็จ");
-    }
+          setOrders((prev) =>
+            prev.map((order) => (order.id === id ? updatedOrder : order))
+          );
+
+          showSuccessPopup("สำเร็จ", 'เปลี่ยนสถานะเป็น "จัดส่งแล้ว" เรียบร้อย');
+        } catch (err) {
+          showErrorPopup(
+            "ไม่สำเร็จ",
+            err instanceof Error ? err.message : "เปลี่ยนสถานะไม่สำเร็จ"
+          );
+        }
+      },
+    });
   };
 
-  const handleCompleteOrder = async (id: number) => {
-    try {
-      const token = localStorage.getItem("token");
-      if (!token) {
-        alert("ไม่พบ token กรุณาเข้าสู่ระบบใหม่");
-        return;
-      }
+  const handleCompleteOrder = (id: number) => {
+    showConfirmPopup({
+      title: "ยืนยันการปิดงาน",
+      message: "ต้องการปิดงานออเดอร์นี้ใช่หรือไม่?",
+      confirmText: "ปิดงาน",
+      cancelText: "ยกเลิก",
+      onConfirm: async () => {
+        closePopup();
 
-      const updatedOrder = await updateOrderStatus(id, "COMPLETED", token);
+        try {
+          const token = localStorage.getItem("token");
+          if (!token) {
+            showErrorPopup("เกิดข้อผิดพลาด", "ไม่พบ token กรุณาเข้าสู่ระบบใหม่");
+            return;
+          }
 
-      setOrders((prev) =>
-        prev.map((order) => (order.id === id ? updatedOrder : order))
-      );
+          const updatedOrder = await updateOrderStatus(id, "COMPLETED", token);
 
-      alert("ปิดงานออเดอร์เรียบร้อย");
-    } catch (err) {
-      alert(err instanceof Error ? err.message : "ปิดงานไม่สำเร็จ");
-    }
+          setOrders((prev) =>
+            prev.map((order) => (order.id === id ? updatedOrder : order))
+          );
+
+          showSuccessPopup("สำเร็จ", "ปิดงานออเดอร์เรียบร้อย");
+        } catch (err) {
+          showErrorPopup(
+            "ไม่สำเร็จ",
+            err instanceof Error ? err.message : "ปิดงานไม่สำเร็จ"
+          );
+        }
+      },
+    });
   };
 
-  const handleDeleteOrder = async (id: number) => {
-    const confirmed = window.confirm("ต้องการลบออเดอร์นี้หรือไม่?");
-    if (!confirmed) return;
+  const handleDeleteOrder = (id: number) => {
+    showConfirmPopup({
+      title: "ยืนยันการลบออเดอร์",
+      message: "ต้องการลบออเดอร์นี้หรือไม่? การกระทำนี้อาจไม่สามารถย้อนกลับได้",
+      confirmText: "ลบ",
+      cancelText: "ยกเลิก",
+      onConfirm: async () => {
+        closePopup();
 
-    try {
-      const token = localStorage.getItem("token");
-      if (!token) {
-        alert("ไม่พบ token กรุณาเข้าสู่ระบบใหม่");
-        return;
-      }
+        try {
+          const token = localStorage.getItem("token");
+          if (!token) {
+            showErrorPopup("เกิดข้อผิดพลาด", "ไม่พบ token กรุณาเข้าสู่ระบบใหม่");
+            return;
+          }
 
-      await deleteOrder(id, token);
+          await deleteOrder(id, token);
 
-      const nextOrders = orders.filter((order) => order.id !== id);
-      setOrders(nextOrders);
-      setTotalElements((prev) => Math.max(prev - 1, 0));
+          const nextOrders = orders.filter((order) => order.id !== id);
+          setOrders(nextOrders);
+          setTotalElements((prev) => Math.max(prev - 1, 0));
 
-      if (nextOrders.length === 0 && page > 0) {
-        setPage((prev) => prev - 1);
-      } else {
-        loadOrders(page, size);
-      }
+          if (nextOrders.length === 0 && page > 0) {
+            setPage((prev) => prev - 1);
+          } else {
+            loadOrders(page, size);
+          }
 
-      alert("ลบออเดอร์สำเร็จ");
-    } catch (err) {
-      alert(err instanceof Error ? err.message : "ลบออเดอร์ไม่สำเร็จ");
-    }
+          showSuccessPopup("สำเร็จ", "ลบออเดอร์สำเร็จ");
+        } catch (err) {
+          showErrorPopup(
+            "ไม่สำเร็จ",
+            err instanceof Error ? err.message : "ลบออเดอร์ไม่สำเร็จ"
+          );
+        }
+      },
+    });
   };
 
   const visiblePages = useMemo(() => {
@@ -147,92 +249,105 @@ export default function AdminOrdersPage() {
   }, [page, totalPages]);
 
   return (
-    <div className="space-y-6">
-      <section className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-bold text-slate-800">จัดการออเดอร์</h1>
-          <p className="mt-1 text-slate-500">
-            แสดงออเดอร์ทั้งหมดจากระบบ และเปลี่ยนสถานะได้
+    <>
+      <div className="space-y-6">
+        <section className="flex items-center justify-between">
+          <div>
+            <h1 className="text-2xl font-bold text-slate-800">จัดการออเดอร์</h1>
+            <p className="mt-1 text-slate-500">
+              แสดงออเดอร์ทั้งหมดจากระบบ และเปลี่ยนสถานะได้
+            </p>
+          </div>
+        </section>
+
+        {error && (
+          <div className="rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-600">
+            {error}
+          </div>
+        )}
+
+        <OrderTable
+          orders={orders}
+          onMarkAsShipped={handleMarkAsShipped}
+          onCompleteOrder={handleCompleteOrder}
+          onDelete={handleDeleteOrder}
+          loading={loading}
+        />
+
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <p className="text-sm text-slate-500">
+            หน้า {page + 1} / {totalPages} ({totalElements} รายการ)
           </p>
-        </div>
-      </section>
 
-      {error && (
-        <div className="rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-600">
-          {error}
-        </div>
-      )}
-
-      <OrderTable
-        orders={orders}
-        onMarkAsShipped={handleMarkAsShipped}
-        onCompleteOrder={handleCompleteOrder}
-        onDelete={handleDeleteOrder}
-        loading={loading}
-      />
-
-      <div className="flex flex-wrap items-center justify-between gap-3">
-        <p className="text-sm text-slate-500">
-          หน้า {page + 1} / {totalPages} ({totalElements} รายการ)
-        </p>
-
-        <div className="flex items-center gap-2">
-          <select
-            value={size}
-            onChange={(e) => {
-              setPage(0);
-              setSize(Number(e.target.value));
-            }}
-            className="rounded-lg border border-slate-300 px-3 py-2 text-sm"
-          >
-            <option value={10}>10</option>
-            <option value={20}>20</option>
-            <option value={50}>50</option>
-          </select>
-
-          <div className="flex items-center overflow-hidden rounded-lg border border-slate-300">
-            <button
-              onClick={() => setPage((prev) => Math.max(prev - 1, 0))}
-              disabled={page === 0}
-              className="px-3 py-2 text-sm disabled:opacity-50"
+          <div className="flex items-center gap-2">
+            <select
+              value={size}
+              onChange={(e) => {
+                setPage(0);
+                setSize(Number(e.target.value));
+              }}
+              className="rounded-lg border border-slate-300 px-3 py-2 text-sm"
             >
-              {"<"}
-            </button>
+              <option value={10}>10</option>
+              <option value={20}>20</option>
+              <option value={50}>50</option>
+            </select>
 
-            {visiblePages.map((item, index) =>
-              item === "..." ? (
-                <span
-                  key={`ellipsis-${index}`}
-                  className="px-3 py-2 text-sm text-slate-500"
-                >
-                  ...
-                </span>
-              ) : (
-                <button
-                  key={item}
-                  onClick={() => setPage(item as number)}
-                  className={`px-3 py-2 text-sm border-l border-slate-300 ${page === item
-                      ? "bg-slate-100 font-semibold text-slate-900"
-                      : "bg-white text-slate-700 hover:bg-slate-50"
-                    }`}
-                >
-                  {(item as number) + 1}
-                </button>
-              )
-            )}
+            <div className="flex items-center overflow-hidden rounded-lg border border-slate-300">
+              <button
+                onClick={() => setPage((prev) => Math.max(prev - 1, 0))}
+                disabled={page === 0}
+                className="px-3 py-2 text-sm disabled:opacity-50"
+              >
+                {"<"}
+              </button>
 
-            <button
-              onClick={() =>
-                setPage((prev) => Math.min(prev + 1, totalPages - 1))
-              }
-              disabled={page + 1 >= totalPages}
-              className="border-l border-slate-300 px-3 py-2 text-sm disabled:opacity-50"
-            >
-              {">"}
-            </button>
+              {visiblePages.map((item, index) =>
+                item === "..." ? (
+                  <span
+                    key={`ellipsis-${index}`}
+                    className="px-3 py-2 text-sm text-slate-500"
+                  >
+                    ...
+                  </span>
+                ) : (
+                  <button
+                    key={item}
+                    onClick={() => setPage(item as number)}
+                    className={`border-l border-slate-300 px-3 py-2 text-sm ${page === item
+                        ? "bg-slate-100 font-semibold text-slate-900"
+                        : "bg-white text-slate-700 hover:bg-slate-50"
+                      }`}
+                  >
+                    {(item as number) + 1}
+                  </button>
+                )
+              )}
+
+              <button
+                onClick={() =>
+                  setPage((prev) => Math.min(prev + 1, totalPages - 1))
+                }
+                disabled={page + 1 >= totalPages}
+                className="border-l border-slate-300 px-3 py-2 text-sm disabled:opacity-50"
+              >
+                {">"}
+              </button>
+            </div>
           </div>
         </div>
       </div>
-    </div>
+
+      <ActionPopup
+        open={popup.open}
+        type={popup.type}
+        title={popup.title}
+        message={popup.message}
+        onClose={closePopup}
+        onConfirm={popup.onConfirm}
+        confirmText={popup.confirmText}
+        cancelText={popup.cancelText}
+      />
+    </>
   );
 }
