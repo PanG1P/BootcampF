@@ -43,18 +43,16 @@ export default function CatalogPage() {
     return () => { isMounted = false; };
   }, []);
 
-  // ฟังก์ชันเริ่มขั้นตอนการเพิ่ม (เปิดฟอร์มแก้ไข)
   const startAdding = (product: any) => {
     setAddingProduct({
       id: product.id,
       product_name: product.name || product.product_name,
       selling_price: Number(product.price || product.min_price || 0),
-      quantity: 1, // ค่าเริ่มต้น
+      quantity: 1, 
       image_url: product.image_url || product.imageUrl || "",
     });
   };
 
-  // ฟังก์ชันบันทึกลง Database จริงๆ
   const handleConfirmAdd = async () => {
     if (!addingProduct) return;
     setIsSubmitting(true);
@@ -69,13 +67,14 @@ export default function CatalogPage() {
         selling_price: Number(addingProduct.selling_price),
         quantity: Number(addingProduct.quantity),
       };
-
       await createShopProduct(payload, token);
-      setSuccessMsg(`เพิ่ม "${payload.product_name}" เข้าร้านสำเร็จ!`);
-      setAddingProduct(null); // ปิดฟอร์ม
+
+      setSuccessMsg(`เพิ่ม "${payload.product_name}" และตัดสต็อกกลางเรียบร้อย!`);
+      setAddingProduct(null); 
       setTimeout(() => setSuccessMsg(""), 3000);
+
     } catch (err) {
-      alert("เพิ่มสินค้าไม่สำเร็จ: " + (err instanceof Error ? err.message : "เกิดข้อผิดพลาด"));
+      alert("ผิดพลาด: " + (err instanceof Error ? err.message : "เกิดข้อผิดพลาด"));
     } finally {
       setIsSubmitting(false);
     }
