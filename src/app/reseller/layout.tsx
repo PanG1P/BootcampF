@@ -21,7 +21,7 @@ export default function ResellerLayout({
     { name: "Dashboard", path: "/reseller/dashboard" },
     { name: "Catalog", path: "/reseller/catalog" },
     { name: "My Products", path: "/reseller/my-products" },
-    { name: "Wallet", path: "/reseller/wallet" },
+    { name: "Wallet", path: "/reseller/wallets" },
   ];
 
   return (

@@ -11,6 +11,7 @@ function CheckoutContent() {
   const productId = Number(searchParams.get("id") || 0);
   const productName = searchParams.get("name") || "Product";
   const productPrice = Number(searchParams.get("price") || 0);
+  const productCost = Number(searchParams.get("cost") || 0);
   const shopId = Number(searchParams.get("shopId") || 0);
 
   const [quantity, setQuantity] = useState(1);
@@ -80,11 +81,13 @@ function CheckoutContent() {
 
       setInfo("กำลังสร้างคำสั่งซื้อ...");
 
+      const totalProfit = (productPrice - productCost) * quantity;
+
       const createdOrder = await createOrder(
         {
           shop_id: shopId,
           total_amount: total,
-          reseller_profit: 0,
+          reseller_profit: totalProfit > 0 ? totalProfit : 0,
           status: "PENDING",
         },
         token
@@ -96,7 +99,7 @@ function CheckoutContent() {
         {
           order_id: createdOrder.id,
           product_id: productId,
-          cost_price: productPrice,
+          cost_price: productCost > 0 ? productCost : productPrice,
           selling_price: productPrice,
           quantity,
         },
