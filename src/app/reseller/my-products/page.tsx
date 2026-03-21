@@ -158,10 +158,16 @@ export default function MyProductsPage() {
         throw new Error("ราคาต้องไม่ติดลบ");
       }
 
+      if (product.quantity < 0) {
+        throw new Error("จำนวนสินค้าต้องไม่ติดลบ");
+      }
+
       const payload: ShopProductPayload = {
         shop_id: product.shop_id,
         product_id: product.product_id,
         selling_price: product.selling_price,
+        quantity: product.quantity,
+        product_name: product.product_name,
       };
 
       if (product.isNew || product.id < 0) {
@@ -334,8 +340,16 @@ export default function MyProductsPage() {
                         />
                       </td>
 
-                      <td className="p-4 text-slate-700">
-                        {product.product_name || "-"}
+                      <td className="p-4">
+                        <input
+                          type="text"
+                          value={product.product_name || ""}
+                          onChange={(e) =>
+                            handleChange(product.id, "product_name", e.target.value)
+                          }
+                          className="w-full rounded border p-2"
+                          placeholder="Product Name"
+                        />
                       </td>
 
                       <td className="p-4">
@@ -358,8 +372,14 @@ export default function MyProductsPage() {
                         <input
                           type="number"
                           value={product.quantity}
+                          onChange={(e) =>
+                            handleChange(
+                              product.id,
+                              "quantity",
+                              Number(e.target.value)
+                            )
+                          }
                           className="w-24 rounded border p-2"
-                          disabled
                         />
                       </td>
 
