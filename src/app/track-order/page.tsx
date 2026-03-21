@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState, Suspense } from "react";
 import { useSearchParams } from "next/navigation";
 import {
   getOrderById,
@@ -9,7 +9,8 @@ import {
 } from "@/services/order.service";
 import type { Order, OrderItem } from "@/types/order";
 
-export default function TrackOrderPage() {
+// 💡 1. ย้าย Logic และ UI ทั้งหมดมาไว้ใน Component ย่อยนี้
+function TrackOrderContent() {
   const searchParams = useSearchParams();
   const orderIdFromQuery = Number(searchParams.get("orderId") || 0);
 
@@ -231,16 +232,19 @@ export default function TrackOrderPage() {
                 <div
                   key={order.id}
                   onClick={() => setSelectedOrder(order)}
-                  className={`flex cursor-pointer items-center justify-between rounded-xl border p-4 transition hover:bg-gray-50 hover:shadow ${selectedOrder?.id === order.id
+                  className={`flex cursor-pointer items-center justify-between rounded-xl border p-4 transition hover:bg-gray-50 hover:shadow ${
+                    selectedOrder?.id === order.id
                       ? "border-black bg-gray-50"
                       : "border-gray-200"
-                    }`}
+                  }`}
                 >
                   <div>
                     <p className="font-semibold text-black">
                       {order.order_number || `Order #${order.id}`}
                     </p>
-                    <p className="text-sm text-gray-500">Order ID: {order.id}</p>
+                    <p className="text-sm text-gray-500">
+                      Order ID: {order.id}
+                    </p>
                     <p className="text-sm text-gray-500">
                       Total: {formatCurrency(order.total_amount)}
                     </p>
@@ -297,25 +301,28 @@ export default function TrackOrderPage() {
                 return (
                   <div key={step} className="flex flex-1 flex-col items-center">
                     <div
-                      className={`flex h-10 w-10 items-center justify-center rounded-full text-white font-semibold ${active ? "bg-green-500" : "bg-gray-300"
-                        }`}
+                      className={`flex h-10 w-10 items-center justify-center rounded-full font-semibold text-white ${
+                        active ? "bg-green-500" : "bg-gray-300"
+                      }`}
                     >
                       {index + 1}
                     </div>
 
                     <p
-                      className={`mt-2 text-sm font-medium ${active ? "text-green-600" : "text-gray-400"
-                        }`}
+                      className={`mt-2 text-sm font-medium ${
+                        active ? "text-green-600" : "text-gray-400"
+                      }`}
                     >
                       {step}
                     </p>
 
                     {index !== steps.length - 1 && (
                       <div
-                        className={`mt-3 h-1 w-full ${getStep(normalizedSelectedStatus) >= index + 2
+                        className={`mt-3 h-1 w-full ${
+                          getStep(normalizedSelectedStatus) >= index + 2
                             ? "bg-green-500"
                             : "bg-gray-300"
-                          }`}
+                        }`}
                       />
                     )}
                   </div>
@@ -362,7 +369,9 @@ export default function TrackOrderPage() {
                             <td className="p-3">{item.product_id}</td>
                             <td className="p-3">{quantity}</td>
                             <td className="p-3">{formatCurrency(price)}</td>
-                            <td className="p-3">{formatCurrency(subtotal)}</td>
+                            <td className="p-3">
+                              {formatCurrency(subtotal)}
+                            </td>
                           </tr>
                         );
                       })}
@@ -379,5 +388,22 @@ export default function TrackOrderPage() {
         )}
       </div>
     </div>
+  );
+}
+
+// 💡 2. Component หลัก ทำหน้าที่แค่ครอบ Suspense ให้ถูกต้อง
+export default function TrackOrderPage() {
+  return (
+    <Suspense
+      fallback={
+        <div className="flex min-h-screen items-center justify-center bg-gray-100">
+          <div className="text-xl font-semibold text-gray-500">
+            Loading order tracking...
+          </div>
+        </div>
+      }
+    >
+      <TrackOrderContent />
+    </Suspense>
   );
 }
