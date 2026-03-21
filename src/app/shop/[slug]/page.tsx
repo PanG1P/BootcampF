@@ -90,7 +90,10 @@ export default function ShopPage({ params }: ShopPageProps) {
     }).format(Number.isNaN(amount) ? 0 : amount);
   };
 
-  const getProductImage = () => {
+  const getProductImage = (url?: string | null) => {
+    if (url && (url.startsWith('http') || url.startsWith('data:image'))) {
+      return url;
+    }
     return "/placeholder-product.png";
   };
 
@@ -191,25 +194,29 @@ export default function ShopPage({ params }: ShopPageProps) {
           </div>
         ) : products.length > 0 ? (
           <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4">
-            {products.map((product) => {
-              const name = `Product #${product.product_id}`;
-              const price = Number(product.selling_price ?? 0);
+            {products.map((productItem: any) => {
+
+              const productDetail = productItem.product;
+              const name = productDetail?.name || "ไม่ระบุชื่อสินค้า";
+              const price = Number(productItem.selling_price ?? 0);
               const stock =
-                product.quantity === null || product.quantity === undefined
+                productDetail.stock === null || productDetail.stock === undefined
                   ? 0
-                  : Number(product.quantity);
+                  : Number(productDetail.stock);
+
+              const imageUrl = productDetail?.image_url; 
 
               return (
                 <Link
-                  key={product.id}
-                  href={`/checkout?id=${product.product_id}&name=${encodeURIComponent(
+                  key={productItem.id}
+                  href={`/checkout?id=${productItem.product_id}&name=${encodeURIComponent(
                     name
                   )}&price=${price}&shopId=${shop.id}`}
                   className="group"
                 >
                   <div className="relative overflow-hidden rounded-2xl bg-white shadow hover:shadow-lg transition">
                     <img
-                      src={getProductImage()}
+                      src={getProductImage(imageUrl)}
                       alt={name}
                       className="h-56 w-full object-cover transition group-hover:scale-105"
                     />

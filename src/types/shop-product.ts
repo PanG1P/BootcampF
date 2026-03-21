@@ -5,6 +5,9 @@ export type ShopProduct = {
   product_name?: string;
   selling_price: number;
   quantity?: number;
+  image?: string | null;
+  image_url?: string | null;
+  imageUrl?: string | null;
 };
 
 export type ShopProductPayload = {
